@@ -12,7 +12,7 @@ Include the Aliss Map embed code in your page and the Map and Service list will 
 ```html
   <div id="alissmap"></div>
 
-  <script src="aliss-map.js" type="text/javascript" defer></script>
+  <script src="https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/demo/aliss-map.js" type="text/javascript" defer></script>
   <script>  
     alissMapConfig = {
       target: '#alissmap',
