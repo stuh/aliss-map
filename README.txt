@@ -1,12 +1,34 @@
 # ALISS Map embed
 
-ALISS (A Local Information System for Scotland) is a service to help you find help and support close to you when you need it most. You can read about the ALISS system here (https://www.aliss.org/).
+ALISS (A Local Information System for Scotland) is a national digital programme enabling people and professionals to find and share information on health and wellbeing resources, services, groups and support in their local communities and online. (https://www.aliss.org/).
 
 aliss-map.js is a javascript plugin for anyone who wants to easily embed a map of selected ALISS services by category on their website. 
 
-## Install
+## Basic Usage
+Include the Aliss Map embed code in your page and the Map and Service list will display. You can create this manually (see below for options) or use our simple configuration tool to create your embed code.
 
-1. <a href="" download>Download `aliss-map.js`</a>
+#### &rarr; [Use the embed creation page](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html)
+
+```html
+  <div id="alissmap"></div>
+
+  <script src="aliss-map.js" type="text/javascript" defer></script>
+  <script>  
+    alissMapConfig = {
+      target: '#alissmap',
+      defaultZoom: 10,
+      defaultPostCode: 'G11AB',
+      defaultLatLng: 55.86521,-4.2699,
+      defaultSearchRadius: 10000,
+      categories: children-and-families,community-resources,food-and-nutrition
+    }
+  </script>
+  
+```
+
+## Manual usage
+
+1. <a href="https://github.com/stuh/aliss-map/blob/master/demo/aliss-map.js" download>Download `aliss-map.js`</a>
 
 2. Include the script on the header of the page where you want to use the plugin.
 
@@ -41,9 +63,6 @@ aliss-map.js is a javascript plugin for anyone who wants to easily embed a map o
 
 2. Upon activation, visit the `Settings » Insert Headers` and Footers page. You will see two boxes, one for the header and the other for the footer section.
 
-3. Follow the [install instructions above](#install).
-
-
 
 ## Options
 
@@ -60,18 +79,9 @@ Here are the available options you can add to your alissMapConfig object:
 You can find the full list of categories including slugs via the [ALISS API](https://www.aliss.org/api/v4/categories/).
 
 
-## Demo
+## Links
 
-You can find [example code](https://glitch.com/~aliss-js), and a [demo](https://aliss-js.glitch.me/) on glitch.com.
-
-
-## Plugin Development
-
-PRs welcome!
-
-Edit `src/aliss.js`, then build for production by running webpack cli:
-
-`npx webpack --config webpack.config.js`
+[Demo page](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/demo/) and [Embed creation page](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
 
 
 ## Links
