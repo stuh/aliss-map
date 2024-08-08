@@ -39,7 +39,7 @@ Include the Aliss Map embed code in your page and the Map and Service list will 
 3. Create an HTML element on the page where you want to see the plugin appear
 
 ```
-<div id="aliss-target"></div>
+<div id="alissmap"></div>
 ```
 
 4. Put this at the footer of the page with the new element
