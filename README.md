@@ -76,7 +76,7 @@ Here are the available options you can add to your alissMapConfig object:
 | `defaultSearchRadius` | `10000` | Number | The default ALISS search radius |
 | `categories` | `null` | Array | A mustache template used to produce HTML for the document. |
 
-You can find the full list of categories including slugs via the [ALISS API](https://www.aliss.org/api/v4/categories/).
+You can find the full list of categories including slugs via the [ALISS API](https://www.aliss.org/api/v4/categories/) or use our [embed creation tool to create your embed](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
 
 
 ## Links
