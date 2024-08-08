@@ -16,7 +16,6 @@ Include the Aliss Map embed code in your page and the Map and Service list will 
   <script>  
     alissMapConfig = {
       target: '#alissmap',
-      defaultZoom: 10,
       defaultPostCode: 'G11AB',
       defaultLatLng: 55.86521,-4.2699,
       defaultSearchRadius: 10000,
