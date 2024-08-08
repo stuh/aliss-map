@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer components {
+  body{
+    @apply font-body;
+  }
+  h1,h2,h3,h4,h5,h6{
+    @apply font-heading;
+  }
+  h1 {
+    @apply text-[32px] font-bold;
+  }
+  h2{
+    @apply text-[28px] font-bold;
+  }
+  a{  
+    @apply font-bold text-darkblue underline;
+  }
+  p{
+    @apply text-[16px]
+  }
+  label{
+    @apply text-[20px] font-bold;
+  }
+}

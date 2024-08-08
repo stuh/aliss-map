@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configure your own ALISS system map</title>
+  <link rel="stylesheet" href="https://use.typekit.net/mzk4tpf.css">
+  <link href="/dist/main.css" rel="stylesheet">
+</head>
+<body class="bg-white">
+<header class="bg-alissblue flex justify-start items-center h-[136px]">
+<img src="https://www.aliss.org/ALISS.THEME/dist/img/aliss-logo.png" class="w-[96px]" alt="A Local Information System for Scotland (ALISS) logo">
+<span class="text-white text-2xl text-balance w-[250px]">A Local Information System for Scotland</span>
+</header>
+<main class="container p-10 mx-auto">
+  <h1>Configure your ALISS system map</h1>
+  <div class="lg:flex lg:justify-between">
+    <div class="lg:w-4/12">
+      <div class="flex flex-col mt-8">
+        <label for="aliss-postcode">1 Postcode</label>
+        <input type="text" id="aliss-postcode" name="aliss-postcode" value="G11AB" class="border border-grey p-2 bg-offwhite">
+        <p>Enter the postcode you want to center the map on.</p>
+        <p class="po_error hidden text-white bg-red p-2">Please enter a valid UK Postcode</p>
+      </div>
+      <div class="flex flex-col mt-8">
+        <label for="aliss-services">2 Select ALISS services</label>
+        <p>Select the services you want to include on your map. (Ctrl click or Cmd click to select multiple)</p>
+        <select multiple id="aliss-services" size="20" class="border border-grey p-2 bg-offwhite">
+        </select>
+      </div>
+      <span class="pt-8 block font-bold text-[20px]">3 Copy the code</span>
+      <p>Copy the code to be added to your site.</p>
+      <textarea id="widget-output" rows="12" class="w-full border border-grey px-2 py-1  bg-offwhite" readonly="readonly"></textarea>
+      <button id="copy-code" class="text-[20px] min-w-[150px] px-[32px] py-[16px] border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack">Copy the code</button>
+      <span id="copyMessage" class="hidden ">Copied Successfully!</span>
+    </div>
+
+    <div class="lg:w-7/12 lg:pl-12 mt-8 lg:border-l-2 border-offwhite">
+    <h2>Preview</h2>
+    <div id="alissmap"></div>
+
+    <script src="/demo/aliss-map.js" type="text/javascript" defer></script>
+    <script type="text/javascript">
+      alissMapConfig = {
+          target: '#alissmap',
+          defaultPostCode: 'G11AB',
+          defaultLatLng: [55.86521, -4.26990],
+          defaultSearchRadius: 10000,
+          categories: []
+      }
+      </script>
+    </div>
+  </div>
+  
+
+</main>
+
+<script>
+// fetch all services from the API https://www.aliss.org/api/v4/categories/ as json with a data attribute
+// loop through the data and create an option for each category
+// append the option to the select element
+// add an event listener to the select element that listens for a change event
+// when the event is triggered, get the value of the selected option
+// log the value to the console
+
+let selectedAlissServices = [];
+let selectedPostcode = 'G11AB';
+let selectedLatLng = [55.86521, -4.26990];
+let selectedZoomLevel = 10;
+const getAlissServices = async () => {
+  const resp = await fetch('https://www.aliss.org/api/v4/categories/');
+  const data = await resp.json();
+  return data.data;
+};
+
+const addServicesToSelect = async () => {
+  const select = document.querySelector('select#aliss-services');
+  try {
+    const data = await getAlissServices();
+    console.log(data);
+    data.forEach(category => {
+      const option = document.createElement('option');
+      option.value = category.slug;
+      option.textContent = category.name;
+      select.appendChild(option);
+
+      if (category.sub_categories) {
+        category.sub_categories.forEach(subCategory => {
+          const subOption = document.createElement('option');
+          subOption.value = subCategory.slug;
+          subOption.textContent = `\xA0 \xA0 \xA0 ${subCategory.name}`;
+          select.appendChild(subOption);
+        });
+        
+      }
+
+    });
+    select.addEventListener('change', () => {
+      selectedAlissServices = Array.from(select.selectedOptions).map(option => option.value);
+      outputWidgetCode();
+    });
+  } catch (err) {
+    console.error(`Oops, something is wrong ${err}`);
+  }
+};
+
+const postCodeInput = document.querySelector('#aliss-postcode');
+postCodeInput.addEventListener('change', async (e) => {
+  selectedPostcode = e.target.value;
+
+  // the postcoe regex
+  rePostCode = /^(([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2}))$/;
+
+  // do the test
+  const postCodeOk = rePostCode.test(selectedPostcode);
+
+  // if not a good postcode then show the error with styles and stop.
+  if (!postCodeOk) {
+    document.querySelector('.po_error').classList.remove('hidden');
+    document.querySelector('.po_error').classList.add('block');
+    return;
+  }
+
+  selectedLatLng = await getLatLngFromPostCode(selectedPostcode);
+
+  console.log(selectedLatLng);
+
+
+  // reset any warnings
+  document.querySelector('.po_error').classList.remove('block');
+  document.querySelector('.po_error').classList.add('hidden');
+
+  // run the output
+  outputWidgetCode();
+});
+
+const outputWidgetCode = () => {
+
+  let alissConfig = {
+    target: '#alissmap',
+    defaultZoom: selectedZoomLevel,
+    defaultPostCode: selectedPostcode,
+    defaultLatLng: selectedLatLng,
+    defaultSearchRadius: 10000,
+    categories: selectedAlissServices
+  }
+  
+  const widgetCode = `
+  <!-- Include the ALISS Map widget script -->
+  <div id="alissmap"></div>
+  <script src="aliss-map.js" type="text/javascript" defer>\<\/script>
+  <script>\
+  alissMapConfig = {
+    target: '#alissmap',
+    defaultZoom: ${selectedZoomLevel},
+    defaultPostCode: '${selectedPostcode}',
+    defaultLatLng: ${selectedLatLng},
+    defaultSearchRadius: 10000,
+    categories: ${selectedAlissServices}
+  }<\/script>
+  <!-- End Include the ALISS Map widget script -->
+  `
+
+  // write this to the textarea for copying
+  document.querySelector('#widget-output').value = widgetCode;
+
+  // update the map with the new config
+  alissMapConfig = {
+    ...alissConfig
+  }
+  // clear existing map
+  document.querySelector('#alissmap').innerHTML = '';
+  // re-initialize the map
+  initALISSMap();
+
+  
+};
+
+
+
+const copyToClipboard = () => {
+  const textarea = document.getElementById('widget-output');
+  textarea.select();
+  textarea.setSelectionRange(0, 99999); // For mobile devices
+
+  try {
+      const successful = document.execCommand('copy');
+      const msg = successful ? 'successful' : 'unsuccessful';
+      console.log('Copying text command was ' + msg);
+      if (successful) {
+          const copyMessage = document.getElementById('copyMessage');
+          copyMessage.classList.remove('hidden');
+          copyMessage.classList.add('inline');
+
+          // Hide the message after 2 seconds
+          setTimeout(() => {
+              copyMessage.classList.add('hidden');
+              copyMessage.classList.remove('inline');
+          }, 2000);
+      }
+  } catch (err) {
+      console.error('Oops, unable to copy', err);
+  }
+
+  // Deselect the textarea after copying
+  textarea.blur();
+}
+
+// Add event listener to the copy button
+document.querySelector('#copy-code').addEventListener('click', copyToClipboard);
+
+addServicesToSelect()
+
+
+
+</script>
+</body>
+</html>
+
