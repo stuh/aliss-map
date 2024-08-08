@@ -5,9 +5,9 @@ ALISS (A Local Information System for Scotland) is a national digital programme 
 aliss-map.js is a javascript plugin for anyone who wants to easily embed a map of selected ALISS services by category on their website. 
 
 ## Basic Usage
-Include the Aliss Map embed code in your page and the Map and Service list will display. You can create this manually (see below for options) or use our simple configuration tool to create your embed code.
+Include the Aliss Map embed code in your page and the Map and Service list will display. You can create this manually (see below for options) or use our simple map builder tool to create your embed code.
 
-#### &rarr; [Use the embed creation page](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html)
+#### &rarr; [Use the map builder tool](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html)
 
 ```html
   <div id="alissmap"></div>
@@ -75,12 +75,12 @@ Here are the available options you can add to your alissMapConfig object:
 | `defaultSearchRadius` | `10000` | Number | The default ALISS search radius |
 | `categories` | `null` | Array | A mustache template used to produce HTML for the document. |
 
-You can find the full list of categories including slugs via the [ALISS API](https://www.aliss.org/api/v4/categories/) or use our [embed creation tool to create your embed](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
+You can find the full list of categories including slugs via the [ALISS API](https://www.aliss.org/api/v4/categories/) or use our [map builder tool to create your embed](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
 
 
 ## Links
 
-[Demo page](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/demo/) and [Embed creation page](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
+[Demo page](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/demo/) and [map builder tool](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
 
 
 ## Links
