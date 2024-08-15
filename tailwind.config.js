@@ -12,6 +12,7 @@ module.exports = {
       alissblue: '#1e7abd',
       darkblue: '#004785',
       grey: '#4b5b68',
+      lightgrey: '#F7F7F9',
       almostblack: '#212121',
       red: '#af1a04',
       teal: '#27bac0',

@@ -13,42 +13,53 @@
 <span class="text-white text-2xl text-balance w-[250px]">A Local Information System for Scotland</span>
 </header>
 <main class="container p-10 mx-auto">
-  <h1>Build your ALISS system map embed</h1>
+  
   <div class="lg:flex lg:justify-between">
-    <div class="lg:w-4/12">
-      <div class="flex flex-col mt-8">
-        <label for="aliss-postcode">1 Postcode</label>
-        <input type="text" id="aliss-postcode" name="aliss-postcode" value="G11AB" class="border border-grey p-2 bg-offwhite">
-        <p>Enter the postcode you want to center the map on.</p>
+    <div class="lg:w-5/12">
+      <div class="flex flex-col mt-8 ">
+        <h1 class="pb-7">Create your ALISS map</h1>
+        <p class="text-[18px] pb-7">Follow the steps below to create your customised ALISS map.</p>
+        <label for="aliss-postcode" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
+        <p class="pb-3">Enter the postcode or region you want to center the map on.</p>
+        <input type="text" id="aliss-postcode" name="aliss-postcode" value="G11AB" class="border border-grey p-2 bg-lightgrey">
         <p class="po_error hidden text-white bg-red p-2">Please enter a valid UK Postcode</p>
       </div>
       <div class="flex flex-col mt-8">
-        <label for="aliss-services">2 Select ALISS services</label>
-        <p>Select the services you want to include on your map. (Ctrl click or Cmd click to select multiple)</p>
-        <select multiple id="aliss-services" size="20" class="border border-grey p-2 bg-offwhite">
+        <label for="aliss-services" class="text-darkblue font-black heading1 pb-3">Step 2: Category Selection</label>
+        <p class="pb-3">Select the service categories you want to include on your map.</p>
+        <select multiple id="aliss-services" size="20" class="border border-grey p-2 bg-lightgrey">
         </select>
       </div>
-      <span class="pt-8 block font-bold text-[20px]">3 Copy the code</span>
-      <p>Copy the code to be added to your site.</p>
-      <textarea id="widget-output" rows="12" class="w-full border border-grey px-2 py-1  bg-offwhite" readonly="readonly"></textarea>
-      <button id="copy-code" class="text-[20px] min-w-[150px] px-[32px] py-[16px] border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack">Copy the code</button>
-      <span id="copyMessage" class="hidden ">Copied Successfully!</span>
+      <div class="mt-8">
+        <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 3: Code</label>
+        <p class="pb-3">Copy the code to be added to your site.</p>
+        <textarea id="widget-output" rows="12" class="w-full border border-grey bg-lightgrey" readonly="readonly"></textarea>
+        <button id="copy-code" class="text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Copy the code</button>
+        <span id="copyMessage" class="hidden ">Copied Successfully!</span>
+      </div>
+
+      <div class="bg-lightgrey p-6 mt-8">
+        <p class="text-[24px] font-black">Need some help?</p>
+        <a href="https://www.aliss.org/contact/" class="text-darkblue inline-block text-[18px] mt-[17px] mb-[18px]">ALISS Help Center</a>
+      </div>
     </div>
 
-    <div class="lg:w-7/12 lg:pl-12 mt-8 lg:border-l-2 border-offwhite">
-    <h2>Preview</h2>
-    <div id="alissmap"></div>
+    <div class="lg:w-7/12 lg:pl-24 mt-8 ">
+      <h2 class="heading1">Preview your Map</h2>
+      <div class="lg:border-2 border-[#D9D9D9] mt-6 py-[35px] px-[50px]">
+        <div id="alissmap"></div>
 
-    <script src="https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/demo/aliss-map.js" type="text/javascript" defer></script>
-    <script type="text/javascript">
-      alissMapConfig = {
-          target: '#alissmap',
-          defaultPostCode: 'G11AB',
-          defaultLatLng: [55.86521, -4.26990],
-          defaultSearchRadius: 10000,
-          categories: []
-      }
-      </script>
+        <script src="/demo/aliss-map.js" type="text/javascript" defer></script>
+        <script type="text/javascript">
+          alissMapConfig = {
+            target: '#alissmap',
+              defaultPostCode: 'G11AB',
+              defaultLatLng: [55.86521, -4.26990],
+              defaultSearchRadius: 10000,
+              categories: []
+          }
+          </script>
+      </div>
     </div>
   </div>
   
@@ -145,8 +156,7 @@ const outputWidgetCode = () => {
     categories: selectedAlissServices
   }
   
-  const widgetCode = `
-  <!-- Include the ALISS Map widget script -->
+  const widgetCode = `<!-- Include the ALISS Map widget script -->
   <div id="alissmap"></div>
   <script src="aliss-map.js" type="text/javascript" defer>\<\/script>
   <script>\

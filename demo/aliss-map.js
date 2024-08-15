@@ -109,11 +109,11 @@ const getServices = async (baseurl) => {
         const count = data.count;
         data.data.forEach(service => {
           // destructure the services object and add to array
-          const { name, gcfn, description, locations, url, phone, email, organisation } = service;
+          const { name, gcfn, description, locations, url, phone, email, organisation, permalink } = service;
           // for each service calulcate its distance from the currently searched postcode, we'll sort by this later when building the card list below the map
           const distance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], locations[0]?.latitude || 0, locations[0]?.longitude || 0)
           // add the object to the services Array
-          services.push({ name, gcfn, description, locations, url, phone, email, organisation, distance });
+          services.push({ name, gcfn, description, locations, url, phone, email, organisation, distance, permalink });
         });
         // increment the page with 1 on each loop
         page++;
@@ -175,7 +175,7 @@ const buildServiceCard = (service, locationOverride) => {
   
   let serviceTitle = document.createElement('h3');
   serviceTitle.className = "service-title";
-  serviceTitle.innerHTML = service.name;
+  serviceTitle.innerHTML = `<a href="${service.permalink}" target="_blank">${service.name}</a>`;
   serviceCard.appendChild(serviceTitle);
   
 
@@ -468,7 +468,7 @@ const buildLayout = (targetNode) => {
 
           <div class="aliss-map-search">
               <input type="search" name="aliss-postcode" id="aliss-postcode" placeholder="Enter your postcode">
-              <input type="search" name="aliss-q" id="aliss-q" placeholder="filter by keyword">
+              <input type="search" name="aliss-q" id="aliss-q" placeholder="Filter by keyword">
               <button class="aliss-search-button">Submit</button>
           </div>
 
@@ -561,37 +561,25 @@ style.innerHTML = `
         height:100vh;
         background: rgba(255, 255, 255, .5);
       }
-      .aliss-map{
-        font-family: "sofia-pro", sans-serif;;
-      }
 
       .aliss-map  .aliss-map-search{
         padding:10px 0 20px;   
+        display:flex;
+        align-items:center;
       }
       .aliss-map  #aliss-postcode, .aliss-map #aliss-q{
         width:auto;
         display:inline-block;
         margin-bottom:0;
         border:1px solid #212121;
-        padding:10px;
+        padding:16px 18px;
+        margin-right:5px;
       }
       .aliss-map  .aliss-search-button{
         padding: 0.6em 0.5em;
         font-size: 20px;
         min-width: 150px;
-        color: #fff;
-        margin: 5px 0 0;
-        font-family: "sofia-pro", sans-serif;;
-        font-weight: 400;
-        transition: color .3s ease-in-out;
-        border: 2px solid transparent;
         position: relative;
-        background-color:#004785;
-
-      }
-      .aliss-map  .aliss-search-button:hover{
-        background-color:#212121;
-        
 
       }
       .aliss-map .aliss-map-categories{
@@ -620,13 +608,14 @@ style.innerHTML = `
       
       .aliss-map .service-links a{
         display:block;
-        padding:5px 10px 5px 0;
+        padding:5px 0px 5px 0;
+        margin-right:10px;
       }
       .aliss-map .location-map-link .pinsvg{
         display:none;
       }
       .aliss-map .results-list {
-        max-height: 50vh;
+        max-height: 75vh;
         overflow-y: auto;
       }
       .aliss-map .results-list .service-links{
