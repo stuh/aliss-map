@@ -11,6 +11,7 @@ let postcode_field; // ref to the postcode field
 let query_field; // ref to the query field
 let output_msg; // ref to the output message div
 let results_list; // ref to the results list div
+let markersArray = []; // array to hold the markers
 
 
 
@@ -56,12 +57,22 @@ document.addEventListener('click', function(e){
       behavior: "smooth"
     });
 
+    // get the data-markerid from the link and trigger the popup
+    // disable for now as it's quite intrusive
+    // const markerId = e.target.dataset.markerid;
+    // const marker = markersArray[markerId];
+    // if (marker) {
+    //   marker.openPopup();
+    // } else {
+    //   console.log('Marker not found with ID:', markerId);
+    // }
+
   }
 });
 
 // get the chosen category, default to food-and-nutrition
 const getSelectedCategory = () => {
-  const category = document.querySelector('input[name="category"]:checked')?.value || 'food-and-nutrition';
+  const category = document.querySelector('input[name="category"]:checked')?.value || '';
   return category;
 }
 
@@ -109,11 +120,11 @@ const getServices = async (baseurl) => {
         const count = data.count;
         data.data.forEach(service => {
           // destructure the services object and add to array
-          const { name, gcfn, description, locations, url, phone, email, organisation, permalink } = service;
+          const { name, gcfn, description, locations, url, phone, email, organisation, permalink, id } = service;
           // for each service calulcate its distance from the currently searched postcode, we'll sort by this later when building the card list below the map
           const distance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], locations[0]?.latitude || 0, locations[0]?.longitude || 0)
           // add the object to the services Array
-          services.push({ name, gcfn, description, locations, url, phone, email, organisation, distance, permalink });
+          services.push({ name, gcfn, description, locations, url, phone, email, organisation, distance, permalink, id });
         });
         // increment the page with 1 on each loop
         page++;
@@ -139,6 +150,7 @@ if (map.hasLayer(markersLayer)) {
   markersLayer.clearLayers();
 }
 
+
 // for each service build the popup and then add to the layerGroup
 services.forEach(service => {
   if (service.locations.length > 0) {
@@ -148,7 +160,7 @@ services.forEach(service => {
       let serviceCard = buildServiceCard(service, location);
       // add the marker if it has a latlng
       if (location.latitude && location.longitude) {
-        L.marker([location.latitude, location.longitude]).bindPopup(serviceCard).bindTooltip(`<strong>${service.name}</strong><br/>${location.street_address}<br/>${location.locality}`).addTo(markersLayer);
+        markersArray[`${service.id}${location.latitude}${location.longitude}`] = L.marker([location.latitude, location.longitude]).bindPopup(serviceCard).bindTooltip(`<strong>${service.name}</strong><br/>${location.street_address}<br/>${location.locality}`).addTo(markersLayer);
       }
       // add latlng to the array to be used to set the bonds of the map
       // arrayOfLatLngs.push([location.latitude, location.longitude]);
@@ -215,7 +227,7 @@ const buildServiceCard = (service, locationOverride) => {
   locations.forEach(location => {
     let locationText = document.createElement('span');
     // if location has a latitute and longitude then we can add a link to the map
-      locationText.innerHTML = `<span>${location.formatted_address}</span> <svg class="pinsvg" width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd"><path d="M12 10c-1.104 0-2-.896-2-2s.896-2 2-2 2 .896 2 2-.896 2-2 2m0-5c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3m-7 2.602c0-3.517 3.271-6.602 7-6.602s7 3.085 7 6.602c0 3.455-2.563 7.543-7 14.527-4.489-7.073-7-11.072-7-14.527m7-7.602c-4.198 0-8 3.403-8 7.602 0 4.198 3.469 9.21 8 16.398 4.531-7.188 8-12.2 8-16.398 0-4.199-3.801-7.602-8-7.602"/></svg>`;
+      locationText.innerHTML = `<a href="Javascript:;" tabindex="0" data-markerid="${service.id}${location.latitude}${location.longitude}">${location.formatted_address}</a> <svg class="pinsvg" width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>`;
     if (location.latitude && location.longitude) {
       locationText.className = "location-map-link";
       locationText.dataset.lat = location.latitude;
@@ -266,7 +278,7 @@ const buildServiceCard = (service, locationOverride) => {
 
 const buildResultsList = (services) => {
 
-results_list.innerHTML = '';
+results_list.innerHTML = `<p>${services.length} services found</p>`;
 
 services.forEach( service => {
   
@@ -305,7 +317,7 @@ if (postCodeToLatLngHistory[postcode]) {
 }
 
 //if its a new one then lests return it from the api and cache the result
-const postcodeApiUrl = 'https://api.getthedata.com/postcode/'
+const postcodeApiUrl = 'https://api.postcodes.io/postcodes/'
 
 try {
       // use fetch to make api call
@@ -313,11 +325,11 @@ try {
       const data = await resp.json();
       const status = data.status;
 
-      if (status == 'match') {
+      if (status == '200') {
         // if a match is found then first cache it
-        postCodeToLatLngHistory[postcode] = [data.data.latitude, data.data.longitude];
+        postCodeToLatLngHistory[postcode] = [data.result.latitude, data.result.longitude];
         // then return it
-        return [data.data.latitude, data.data.longitude];
+        return [data.result.latitude, data.result.longitude];
       } else {
         return alissDefaults.defaultLatLng;
       }
@@ -331,50 +343,50 @@ try {
 
 // do the search
 async function doSearch() {
-//ref to loader
-const loader = document.querySelector('.aliss-map-loader');
+  //ref to loader
+  const loader = document.querySelector('.aliss-map-loader');
 
-// show the loader
-loader.classList.remove('load-hide');
+  // show the loader
+  loader.classList.remove('load-hide');
 
-// get all the services from the API into an arrayOfObjects
-const servicesList = await getServices('https://api.aliss.org/v4/services/');
+  // get all the services from the API into an arrayOfObjects
+  const servicesList = await getServices('https://api.aliss.org/v4/services/');
 
-// now sort them but distance into a new arrayOfObjects
-const sortedArray = servicesList.sort((a, b) => {  
+  // now sort them but distance into a new arrayOfObjects
+  const sortedArray = servicesList.sort((a, b) => {  
   return a.distance >= b.distance
       ? 1
       : -1
   })
 
-// add markers to the map
-addMarkersToMap(sortedArray);
-centerMapOnPostcode();
+  // add markers to the map
+  addMarkersToMap(sortedArray);
+  centerMapOnPostcode();
 
-// show results list
-buildResultsList(sortedArray);
+  // show results list
+  buildResultsList(sortedArray);
 
-// hide the loader
-loader.classList.add('load-hide');
+  // hide the loader
+  loader.classList.add('load-hide');
 }
 
 // use these to get the distance betweem two latlngs
 const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
-var R = 6371; // Radius of the earth in km
-var dLat = deg2rad(lat2-lat1);  // deg2rad below
-var dLon = deg2rad(lon2-lon1); 
-var a = 
-  Math.sin(dLat/2) * Math.sin(dLat/2) +
-  Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-  Math.sin(dLon/2) * Math.sin(dLon/2)
-  ; 
-var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-var d = R * c; // Distance in km
-return d;
+  var R = 6371; // Radius of the earth in km
+  var dLat = deg2rad(lat2-lat1);  // deg2rad below
+  var dLon = deg2rad(lon2-lon1); 
+  var a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2)
+    ; 
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  var d = R * c; // Distance in km
+  return d;
 }
 
 function deg2rad(deg) {
-return deg * (Math.PI/180)
+  return deg * (Math.PI/180)
 }
 
 // add css to the page
@@ -469,7 +481,7 @@ const buildLayout = (targetNode) => {
           <div class="aliss-map-search">
               <input type="search" name="aliss-postcode" id="aliss-postcode" placeholder="Enter your postcode">
               <input type="search" name="aliss-q" id="aliss-q" placeholder="Filter by keyword">
-              <button class="aliss-search-button">Submit</button>
+              <button class="aliss-search-button">Search</button>
           </div>
 
           <div class="output-message"></div>
@@ -710,18 +722,15 @@ const initALISSMap = () => {
   createLoaderSVG();
 
   // create the base map
-    map = L.map('map').setView(alissDefaults.defaultLatLng, 12);
+  map = L.map('map').setView(alissDefaults.defaultLatLng, 12);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: `&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> | &copy <a href="https://www.ons.gov.uk/methodology/geography/licences">Crown copyright and database right ${new Date().getFullYear()}</a> `
   }).addTo(map);
   // create a map layer to hold the markers
-    markersLayer = L.layerGroup();
+  markersLayer = L.layerGroup();
   // add it to the map
   map.addLayer(markersLayer);
-
-  
-
 
   // reference the search button
   search_button = document.querySelector('.aliss-search-button');
@@ -758,7 +767,6 @@ const initALISSMap = () => {
 
 // when ready build the widget
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM fully loaded and parsed');
   // get leaflet and run init
   loadLeafletJS(initALISSMap);
 

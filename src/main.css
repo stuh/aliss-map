@@ -5,7 +5,7 @@
 
 @layer components {
   body{
-    @apply font-body;
+    @apply font-body text-almostblack;
   }
   h1,h2,h3,h4,h5,h6{
     @apply font-heading;
@@ -19,6 +19,7 @@
   a{  
     @apply font-bold text-darkblue underline;
     @apply hover:bg-darkblue hover:text-white hover:shadow-[0_0_0_.25rem_#004785];
+    @apply active:bg-darkblue active:text-white active:shadow-[0_0_0_.25rem_#004785];
     @apply focus:bg-yellow focus:text-almostblack focus:shadow-[0_0_0_.25rem_#fdd522] focus:outline-none;
 
   }
@@ -50,8 +51,12 @@
     @apply no-underline;
     @apply hover:bg-darkblue hover:text-white hover:shadow-[0_0_0_.25rem_#004785];
   }
+  
   .aliss-map .results-list{
     max-height: 97vh;
+  }
+  .aliss-map .results-list .location-map-link .pinsvg{
+    @apply fill-darkblue;
   }
   
 }

@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Configure your own ALISS system map</title>
   <link rel="stylesheet" href="https://use.typekit.net/mzk4tpf.css">
+  <script src="https://kit.fontawesome.com/b05dd168a1.js" crossorigin="anonymous"></script>
   <link href="/dist/main.css" rel="stylesheet">
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCvj5HcmgDF8tOQriPKdBjE9IF5jaDBJU4&amp;libraries=places&amp;v=weekly&amp;callback=initMap" defer="" async=""></script>
 </head>
 <body class="bg-white">
 <header class="bg-alissblue flex justify-start items-center h-[136px]">
@@ -20,31 +22,32 @@
         <h1 class="pb-7">Create your ALISS map</h1>
         <p class="text-[18px] pb-7">Follow the steps below to create your customised ALISS map.</p>
         <label for="aliss-postcode" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
-        <p class="pb-3">Enter the postcode or region you want to center the map on.</p>
-        <input type="text" id="aliss-postcode" name="aliss-postcode" value="G11AB" class="border border-grey p-2 bg-lightgrey">
-        <p class="po_error hidden text-white bg-red p-2">Please enter a valid UK Postcode</p>
+        <p class="pb-3" id="aliss-postcode-hint">Enter the postcode or region you want to center the map on.</p>
+        <input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="border border-grey p-2 bg-lightgrey">
+        <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
       </div>
       <div class="flex flex-col mt-8">
         <label for="aliss-services" class="text-darkblue font-black heading1 pb-3">Step 2: Category Selection</label>
-        <p class="pb-3">Select the service categories you want to include on your map.</p>
-        <select multiple id="aliss-services" size="20" class="border border-grey p-2 bg-lightgrey">
-        </select>
+        <p class="pb-3" >Select the service categories you want to include on your map.</p>
+        
+        <div id="aliss-services" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto">
+        </div>
       </div>
       <div class="mt-8">
         <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 3: Code</label>
-        <p class="pb-3">Copy the code to be added to your site.</p>
-        <textarea id="widget-output" rows="12" class="w-full border border-grey bg-lightgrey" readonly="readonly"></textarea>
+        <p class="pb-3" id="aliss-widget-output-hint">Copy the code to be added to your site.</p>
+        <textarea id="widget-output" aria-describedby="aliss-widget-output-hint" rows="12" class="w-full border border-grey bg-lightgrey" readonly="readonly"></textarea>
         <button id="copy-code" class="text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Copy the code</button>
         <span id="copyMessage" class="hidden ">Copied Successfully!</span>
       </div>
 
       <div class="bg-lightgrey p-6 mt-8">
         <p class="text-[24px] font-black">Need some help?</p>
-        <a href="https://www.aliss.org/contact/" class="text-darkblue inline-block text-[18px] mt-[17px] mb-[18px]">ALISS Help Center</a>
+        <a href="https://www.aliss.org/aliss-help-centre/" class="text-darkblue inline-block text-[18px] mt-[17px] mb-[18px]">ALISS Help Center</a>
       </div>
     </div>
 
-    <div class="lg:w-7/12 lg:pl-24 mt-8 ">
+    <div class="lg:w-7/12 lg:pl-24 mt-8 " >
       <h2 class="heading1">Preview your Map</h2>
       <div class="lg:border-2 border-[#D9D9D9] mt-6 py-[35px] px-[50px]">
         <div id="alissmap"></div>
@@ -88,36 +91,76 @@ const addServicesToSelect = async () => {
   const select = document.querySelector('select#aliss-services');
   try {
     const data = await getAlissServices();
-    console.log(data);
-    data.forEach(category => {
-      const option = document.createElement('option');
-      option.value = category.slug;
-      option.textContent = category.name;
-      select.appendChild(option);
 
-      if (category.sub_categories) {
-        category.sub_categories.forEach(subCategory => {
-          const subOption = document.createElement('option');
-          subOption.value = subCategory.slug;
-          subOption.textContent = `\xA0 \xA0 \xA0 ${subCategory.name}`;
-          select.appendChild(subOption);
-        });
-        
-      }
+    // Example usage:
+    const checkboxListHtml = createCheckboxListFromJSON(data);
 
+    // Insert the generated HTML into the DOM (for example, inside a div with id "category-list")
+    document.getElementById('aliss-services').innerHTML = checkboxListHtml;
+    
+    // add a listener to the checkboxes, when they are clicked, update the selectedAlissServices array
+    document.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+      checkbox.addEventListener('change', (e) => {
+        const category = e.target.value;
+        if (e.target.checked) {
+          selectedAlissServices.push(category);
+        } else {
+          selectedAlissServices = selectedAlissServices.filter((item) => item !== category);
+        }
+        outputWidgetCode();
+      });
     });
-    select.addEventListener('change', () => {
-      selectedAlissServices = Array.from(select.selectedOptions).map(option => option.value);
-      outputWidgetCode();
-    });
+    
   } catch (err) {
     console.error(`Oops, something is wrong ${err}`);
   }
 };
 
+const createCheckboxListFromJSON = (data, level = 1) => {
+    // Base case: if the data is empty, return an empty string
+    if (!data || data.length === 0) {
+        return '';
+    }
+    // Start an unordered list
+    let html = `<ul class="ml-8 pt-2 ${level == 1 ? '' : ''}">`;
+    // Iterate over each item in the data
+    data.forEach(item => {
+        // Create a list item for the current category with a checkbox
+        html += `
+            <li >
+                <label class="flex items-center gap-2 py-1">
+                    <input type="checkbox" id="category-${item.slug}" name="categories" value="${item.slug}" class="w-6 h-6 border-almostblack">
+                    
+        `;
+        // if the category has a non null icon value then add the icon to the label
+        if (item.icon) {
+            html += `<i class="text-almostblack text-[16px]  ${item.icon}"></i>`;
+        }
+        html += `<span class="text-base font-normal">${item.name}</span>
+                </label>
+        `;
+        // Recursively generate the subcategories, if they exist
+        if (item.sub_categories && item.sub_categories.length > 0) {
+            html += createCheckboxListFromJSON(item.sub_categories, level + 1);
+        }
+        // Close the list item
+        html += '</li>';
+    });
+    // Close the unordered list
+    html += '</ul>';
+    return html;
+}
+
+
+
 const postCodeInput = document.querySelector('#aliss-postcode');
 postCodeInput.addEventListener('change', async (e) => {
   selectedPostcode = e.target.value;
+
+  // reset any aria warnings and errors
+  postCodeInput.setAttribute('aria-invalid', 'false');
+  document.querySelector('.po_error').classList.remove('block');
+  document.querySelector('.po_error').classList.add('hidden');
 
   // the postcoe regex
   rePostCode = /^(([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2}))$/;
@@ -125,23 +168,25 @@ postCodeInput.addEventListener('change', async (e) => {
   // do the test
   const postCodeOk = rePostCode.test(selectedPostcode);
 
-  // if not a good postcode then show the error with styles and stop.
+  // if not a good postcode then show the error message and update its content to "Invalid postcode"
+  // also set the aria-invalid to true
   if (!postCodeOk) {
     document.querySelector('.po_error').classList.remove('hidden');
     document.querySelector('.po_error').classList.add('block');
+    document.querySelector('.po_error').textContent = 'Please enter a valid UK postcode';
+    postCodeInput.setAttribute('aria-invalid', 'true');
     return;
   }
+  
 
+  // get selected latlng from the postcode
   selectedLatLng = await getLatLngFromPostCode(selectedPostcode);
-
-  console.log(selectedLatLng);
-
 
   // reset any warnings
   document.querySelector('.po_error').classList.remove('block');
   document.querySelector('.po_error').classList.add('hidden');
 
-  // run the output
+  // run the output to the widget box for copy and pasting
   outputWidgetCode();
 });
 
@@ -186,8 +231,6 @@ const outputWidgetCode = () => {
   
 };
 
-
-
 const copyToClipboard = () => {
   const textarea = document.getElementById('widget-output');
   textarea.select();
@@ -196,7 +239,6 @@ const copyToClipboard = () => {
   try {
       const successful = document.execCommand('copy');
       const msg = successful ? 'successful' : 'unsuccessful';
-      console.log('Copying text command was ' + msg);
       if (successful) {
           const copyMessage = document.getElementById('copyMessage');
           copyMessage.classList.remove('hidden');
@@ -220,6 +262,67 @@ const copyToClipboard = () => {
 document.querySelector('#copy-code').addEventListener('click', copyToClipboard);
 
 addServicesToSelect()
+
+// load the following when the google maps script has loaded
+function initMap() {
+  const center = { lat: 50.064192, lng: -130.605469 };
+  const defaultBounds = {
+    north: center.lat + 0.1,
+    south: center.lat - 0.1,
+    east: center.lng + 0.1,
+    west: center.lng - 0.1,
+  };
+  const input = document.getElementById("aliss-postcode");
+  const options = {
+    bounds: defaultBounds,
+    componentRestrictions: { country: "gb" },
+    fields: ["geometry", "place_id"], // Focus on geometry and place_id
+    strictBounds: false,
+  };
+  const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+  autocomplete.addListener("place_changed", function() {
+    const place = autocomplete.getPlace();
+    
+    if (!place.geometry) {
+      console.log("No geometry available for this place");
+      return;
+    }
+
+    // Extract the latitude and longitude
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+
+    // Query postcodes.io API using lat/lng to get the postcode
+    fetch(`https://api.postcodes.io/postcodes?lon=${lng}&lat=${lat}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.result && data.result.length > 0) {
+          const postcode = data.result[0].postcode;
+          // Do something with the postcode
+          // Update the selected postcode and latlng
+          // selectedPostcode = postcode;
+          // selectedLatLng = [lat, lng];
+          // Update the postcode input field
+          input.value = postcode;
+          // trigger the change event on the postcode input
+          const event = new Event('change');
+          input.dispatchEvent(event);
+
+
+          // Update the widget code
+          outputWidgetCode();
+
+        } else {
+          console.log("No postcode found for these coordinates");
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching postcode:", error);
+      });
+  });
+}
+
 
 
 
