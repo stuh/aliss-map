@@ -17,9 +17,9 @@ Include the Aliss Map embed code in your page and the Map and Service list will 
     alissMapConfig = {
       target: '#alissmap',
       defaultPostCode: 'G11AB',
-      defaultLatLng: 55.86521,-4.2699,
+      defaultLatLng: [55.86521,-4.2699],
       defaultSearchRadius: 10000,
-      categories: children-and-families,community-resources,food-and-nutrition
+      categories: ["children-and-families" ,"community-resources", "food-and-nutrition"]
     }
   </script>
   
@@ -50,7 +50,7 @@ Include the Aliss Map embed code in your page and the Map and Service list will 
       defaultPostCode: 'G11AB',
       defaultLatLng: [55.86521, -4.26990],
       defaultSearchRadius: 10000,
-      categories: ['money', 'food-and-nutrition', 'community-resources']
+      categories: ["children-and-families" ,"community-resources", "food-and-nutrition"]
   }
   </script>
 ```
