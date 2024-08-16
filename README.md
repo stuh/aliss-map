@@ -7,7 +7,7 @@ aliss-map.js is a javascript plugin for anyone who wants to easily embed a map o
 ## Basic Usage
 Include the Aliss Map embed code in your page and the Map and Service list will display. You can create this manually (see below for options) or use our simple map builder tool to create your embed code.
 
-#### &rarr; [Use the map builder tool](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html)
+#### &rarr; [Use the ALISS Map Creator](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html)
 
 ```html
   <div id="alissmap"></div>
@@ -73,14 +73,14 @@ Here are the available options you can add to your alissMapConfig object:
 | `defaultPostCode` | `'G11AB'` | String | The postcode that the alice search should center on. |
 | `defaultLatLng` | `[55.86521, -4.26990]` | Array | An array of the Latitude and Longitude of the map's center |
 | `defaultSearchRadius` | `10000` | Number | The default ALISS search radius |
-| `categories` | `null` | Array | A mustache template used to produce HTML for the document. |
+| `categories` | `null` | Array | ALISS category slugs you want to show. |
 
 You can find the full list of categories including slugs via the [ALISS API](https://www.aliss.org/api/v4/categories/) or use our [map builder tool to create your embed](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
 
 
 ## Links
 
-[Demo page](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/demo/) and [map builder tool](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
+[Demo page](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/demo/) and [ALISS Map Creator](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
 
 
 ## Links
