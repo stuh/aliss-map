@@ -192,6 +192,10 @@ postCodeInput.addEventListener('change', async (e) => {
 
 const outputWidgetCode = () => {
 
+
+
+
+
   let alissConfig = {
     target: '#alissmap',
     defaultZoom: selectedZoomLevel,
@@ -200,18 +204,20 @@ const outputWidgetCode = () => {
     defaultSearchRadius: 10000,
     categories: selectedAlissServices
   }
-  
+
+
+console.log(typeof selectedAlissServices);  
   const widgetCode = `<!-- Include the ALISS Map widget script -->
   <div id="alissmap"></div>
-  <script src="aliss-map.js" type="text/javascript" defer>\<\/script>
+  <script src="https://glittery-toffee-67851d.netlify.app/demo/aliss-map.js" type="text/javascript" defer>\<\/script>
   <script>\
   alissMapConfig = {
     target: '#alissmap',
     defaultZoom: ${selectedZoomLevel},
     defaultPostCode: '${selectedPostcode}',
-    defaultLatLng: ${selectedLatLng},
+    defaultLatLng: [${selectedLatLng}],
     defaultSearchRadius: 10000,
-    categories: ${selectedAlissServices}
+    categories: ${JSON.stringify(selectedAlissServices)}
   }<\/script>
   <!-- End Include the ALISS Map widget script -->
   `
