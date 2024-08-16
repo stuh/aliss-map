@@ -171,6 +171,9 @@ postCodeInput.addEventListener('change', async (e) => {
   // if not a good postcode then show the error message and update its content to "Invalid postcode"
   // also set the aria-invalid to true
   if (!postCodeOk) {
+    if (selectedPostcode.length === 0) {
+      return;
+    }
     document.querySelector('.po_error').classList.remove('hidden');
     document.querySelector('.po_error').classList.add('block');
     document.querySelector('.po_error').textContent = 'Please enter a valid UK postcode';
