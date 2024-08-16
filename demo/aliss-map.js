@@ -578,14 +578,26 @@ style.innerHTML = `
         padding:10px 0 20px;   
         display:flex;
         align-items:center;
+        flex-wrap: wrap;
+        flex-direction:row;
       }
+      
       .aliss-map  #aliss-postcode, .aliss-map #aliss-q{
         width:auto;
         display:inline-block;
-        margin-bottom:0;
+        margin-bottom:0px;
         border:1px solid #212121;
         padding:16px 18px;
         margin-right:5px;
+      }
+        @media (max-width: 45em) {
+        .aliss-map  .aliss-map-search{
+          flex-direction:column;
+        }
+          .aliss-map  #aliss-postcode, .aliss-map #aliss-q{
+            width:100%;
+            margin-bottom:10px;
+          }
       }
       .aliss-map  .aliss-search-button{
         padding: 0.6em 0.5em;
