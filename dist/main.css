@@ -1124,6 +1124,16 @@ input[type="text"], textarea {
     border-width: 2px;
   }
 
+  .lg\:py-\[35px\] {
+    padding-top: 35px;
+    padding-bottom: 35px;
+  }
+
+  .lg\:px-\[50px\] {
+    padding-left: 50px;
+    padding-right: 50px;
+  }
+
   .lg\:pl-24 {
     padding-left: 6rem;
   }
