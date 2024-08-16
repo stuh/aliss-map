@@ -23,7 +23,7 @@
         <p class="text-[18px] pb-7">Follow the steps below to create your customised ALISS map.</p>
         <label for="aliss-postcode" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
         <p class="pb-3" id="aliss-postcode-hint">Enter the postcode or region you want to center the map on.</p>
-        <input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="border border-grey p-2 bg-lightgrey">
+        <div class="relative"><input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="w-full border border-grey p-2 bg-lightgrey"></div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
       </div>
       <div class="flex flex-col mt-8">
@@ -192,6 +192,10 @@ postCodeInput.addEventListener('change', async (e) => {
 
 const outputWidgetCode = () => {
 
+
+
+
+
   let alissConfig = {
     target: '#alissmap',
     defaultZoom: selectedZoomLevel,
@@ -200,18 +204,20 @@ const outputWidgetCode = () => {
     defaultSearchRadius: 10000,
     categories: selectedAlissServices
   }
-  
+
+
+console.log(typeof selectedAlissServices);  
   const widgetCode = `<!-- Include the ALISS Map widget script -->
   <div id="alissmap"></div>
-  <script src="aliss-map.js" type="text/javascript" defer>\<\/script>
+  <script src="https://glittery-toffee-67851d.netlify.app/demo/aliss-map.js" type="text/javascript" defer>\<\/script>
   <script>\
   alissMapConfig = {
     target: '#alissmap',
     defaultZoom: ${selectedZoomLevel},
     defaultPostCode: '${selectedPostcode}',
-    defaultLatLng: ${selectedLatLng},
+    defaultLatLng: [${selectedLatLng}],
     defaultSearchRadius: 10000,
-    categories: ${selectedAlissServices}
+    categories: ${JSON.stringify(selectedAlissServices)}
   }<\/script>
   <!-- End Include the ALISS Map widget script -->
   `
@@ -324,6 +330,28 @@ function initMap() {
 }
 
 
+// add a clear icon to the postcode input field that clears the input field and only shows when there is text in the field
+const clearIcon = document.createElement('i');
+clearIcon.classList.add('fas', 'fa-square-xmark', 'absolute', 'right-[10px]', 'top-[10px]', 'hidden', 'text-darkblue', 'cursor-pointer', 'text-[1.8rem]', 'text-bold');
+clearIcon.addEventListener('click', () => {
+  postCodeInput.value = '';
+  postCodeInput.focus();
+  clearIcon.classList.add('hidden');
+  clearIcon.classList.remove('block');
+  // trigger the change event on the postcode input
+  const event = new Event('change');
+  postCodeInput.dispatchEvent(event);
+});
+postCodeInput.insertAdjacentElement('afterend', clearIcon);
+postCodeInput.addEventListener('input', () => {
+  if (postCodeInput.value.length > 0) {
+    clearIcon.classList.remove('hidden');
+    clearIcon.classList.add('block');
+  } else {
+    clearIcon.classList.add('hidden');
+    clearIcon.classList.remove('block');
+  }
+});
 
 
 </script>
