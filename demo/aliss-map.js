@@ -481,7 +481,7 @@ const buildLayout = (targetNode) => {
           <div class="aliss-map-search">
               <input type="search" name="aliss-postcode" id="aliss-postcode" placeholder="Enter your postcode">
               <input type="search" name="aliss-q" id="aliss-q" placeholder="Filter by keyword">
-              <button class="aliss-search-button">Search</button>
+              <button type="submit" class="aliss-search-button">Search</button>
           </div>
 
           <div class="output-message"></div>
