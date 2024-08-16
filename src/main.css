@@ -5,24 +5,58 @@
 
 @layer components {
   body{
-    @apply font-body;
+    @apply font-body text-almostblack;
   }
   h1,h2,h3,h4,h5,h6{
     @apply font-heading;
   }
-  h1 {
-    @apply text-[32px] font-bold;
+  h1, .heading1{
+    @apply text-[30px]/[34.5px] font-bold;
   }
   h2{
     @apply text-[28px] font-bold;
   }
   a{  
     @apply font-bold text-darkblue underline;
+    @apply hover:bg-darkblue hover:text-white hover:shadow-[0_0_0_.25rem_#004785];
+    @apply active:bg-darkblue active:text-white active:shadow-[0_0_0_.25rem_#004785];
+    @apply focus:bg-yellow focus:text-almostblack focus:shadow-[0_0_0_.25rem_#fdd522] focus:outline-none;
+
   }
   p{
-    @apply text-[16px]
+    @apply text-[16px] font-normal;
   }
   label{
     @apply text-[20px] font-bold;
   }
+  /* input text boxes */
+  input[type="text"], textarea{
+    @apply text-[20px]/[23px] font-normal px-4 py-3;
+  }
+  input[type="text"], textarea{
+    @apply text-[20px]/[23px] font-normal px-4 py-3;
+  }
+
+  .aliss-map  #aliss-postcode, .aliss-map #aliss-q{
+    @apply font-body font-normal text-base mr-5;
+  }
+  .aliss-map  .aliss-search-button{
+    @apply text-[20px] font-bold min-w-[150px] px-[32px] py-[12px] border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none;
+
+  }
+  .aliss-map h3.service-title{
+    @apply text-[24px] font-black text-darkblue;
+  }
+  .aliss-map h3.service-title a{
+    @apply no-underline;
+    @apply hover:bg-darkblue hover:text-white hover:shadow-[0_0_0_.25rem_#004785];
+  }
+  
+  .aliss-map .results-list{
+    max-height: 97vh;
+  }
+  .aliss-map .results-list .location-map-link .pinsvg{
+    @apply fill-darkblue;
+  }
+  
 }
