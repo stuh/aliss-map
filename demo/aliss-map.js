@@ -6,7 +6,6 @@ let alissDefaults = {}
 let postCodeToLatLngHistory = {}; // used as a cache to hold any previously fetched latlng from the api. 
 let markersLayer = ''; // global markersLayer to hold the markers
 let map = ''; // global map to hold the map
-let search_button; // ref to the search button
 let postcode_field; // ref to the postcode field
 let query_field; // ref to the query field
 let output_msg; // ref to the output message div
@@ -477,12 +476,13 @@ const buildLayout = (targetNode) => {
       // Add the inner HTML content
       section.innerHTML = `
           <div class="aliss-map-loader"></div>
-
-          <div class="aliss-map-search">
-              <input type="search" name="aliss-postcode" id="aliss-postcode" placeholder="Enter your postcode">
-              <input type="search" name="aliss-q" id="aliss-q" placeholder="Filter by keyword">
-              <button type="submit" class="aliss-search-button">Search</button>
-          </div>
+          <form class="aliss-map-search-form" >
+            <div class="aliss-map-search">
+                <input type="search" name="aliss-postcode" id="aliss-postcode" placeholder="Enter your postcode">
+                <input type="search" name="aliss-q" id="aliss-q" placeholder="Filter by keyword">
+                <button type="submit" class="aliss-search-button">Search</button>
+            </div>
+          </form>
 
           <div class="output-message"></div>
 
@@ -732,8 +732,8 @@ const initALISSMap = () => {
   // add it to the map
   map.addLayer(markersLayer);
 
-  // reference the search button
-  search_button = document.querySelector('.aliss-search-button');
+  // reference the aliss-map-search-form
+  search_form = document.querySelector('.aliss-map-search-form');
   // reference the postcode_field
   postcode_field = document.querySelector('#aliss-postcode');
   // reference the query field
@@ -743,10 +743,12 @@ const initALISSMap = () => {
   // reference the results list
   results_list = document.querySelector('.results-list')
 
-  // add click handler for the aliss-search-button 
-  search_button.addEventListener('click', (event) => {
+  // add submit handler for the aliss-map-search-form
+  search_form.addEventListener('submit', (event) => {
+    event.preventDefault();
     doPostCodeSearch();
   });
+
 
   // add click handler for the postcode box, includes the clear button 
   postcode_field.addEventListener('search', (event) => {
