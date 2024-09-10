@@ -26,9 +26,9 @@
         <div class="relative"><input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="w-full border border-grey p-2 bg-lightgrey"></div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
-        <p class="text-[18px] block py-4">How far from the location would you like to show services? </p>
-        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="10">
-        <input type="text" id="distance" name="distance" value="10" class="w-full border border-grey p-2 bg-lightgrey">
+        <p class="text-[18px] block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
+        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="10" aria-describedby="aliss-location-hint">
+        <div class="relative"><input type="text" id="distance" name="distance" value="10" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint"></div>
 
  
       </div>
@@ -517,6 +517,30 @@ postCodeInput.addEventListener('input', () => {
     clearIcon.classList.remove('block');
   }
 });
+
+// add a clear icon for the distance input field that clears the input field and only shows when there is text in the fields
+const clearDistanceIcon = document.createElement('i');
+clearDistanceIcon.classList.add('fas', 'fa-square-xmark', 'absolute', 'right-[10px]', 'top-[10px]', 'hidden', 'text-darkblue', 'cursor-pointer', 'text-[1.8rem]', 'text-bold');
+clearDistanceIcon.addEventListener('click', () => {
+  distanceInput.value = '10';
+  distanceInput.focus();
+  clearDistanceIcon.classList.add('hidden');
+  clearDistanceIcon.classList.remove('block');
+  // trigger the change event on the distance input
+  const event = new Event('input');
+  distanceInput.dispatchEvent(event);
+});
+distanceInput.insertAdjacentElement('afterend', clearDistanceIcon);
+distanceInput.addEventListener('input', () => {
+  if (distanceInput.value.length > 0) {
+    clearDistanceIcon.classList.remove('hidden');
+    clearDistanceIcon.classList.add('block');
+  } else {
+    clearDistanceIcon.classList.add('hidden');
+    clearDistanceIcon.classList.remove('block');
+  }
+});
+
 
 
 </script>
