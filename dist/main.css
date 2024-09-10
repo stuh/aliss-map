@@ -690,6 +690,46 @@ input[type="text"], textarea {
   top: 10px;
 }
 
+.right-0 {
+  right: 0px;
+}
+
+.top-0 {
+  top: 0px;
+}
+
+.right-\[5px\] {
+  right: 5px;
+}
+
+.bottom-\[2px\] {
+  bottom: 2px;
+}
+
+.bottom-\[5px\] {
+  bottom: 5px;
+}
+
+.bottom-\[10px\] {
+  bottom: 10px;
+}
+
+.bottom-\[15px\] {
+  bottom: 15px;
+}
+
+.bottom-\[17px\] {
+  bottom: 17px;
+}
+
+.bottom-\[13px\] {
+  bottom: 13px;
+}
+
+.bottom-\[12px\] {
+  bottom: 12px;
+}
+
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -997,6 +1037,11 @@ input[type="text"], textarea {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
+.text-grey {
+  --tw-text-opacity: 1;
+  color: rgb(75 91 104 / var(--tw-text-opacity));
 }
 
 .blur {

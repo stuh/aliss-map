@@ -23,12 +23,17 @@
         <p class="text-[18px] pb-7">Follow the steps below to create your customised ALISS map.</p>
         <label for="aliss-postcode" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
         <p class="pb-3" id="aliss-postcode-hint">Enter the postcode or region you want to center the map on.</p>
-        <div class="relative"><input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="w-full border border-grey p-2 bg-lightgrey"></div>
+        <div class="relative">
+          <input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="w-full border border-grey p-2 bg-lightgrey">
+        </div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
-        <p class="text-[18px] block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
-        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="10" aria-describedby="aliss-location-hint">
-        <div class="relative"><input type="text" id="distance" name="distance" value="10" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint"></div>
+        <p class="block py-4" id="aliss-location-hint">How far in km from the location would you like to show services? </p>
+        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="5" aria-describedby="aliss-location-hint">
+        <div class="relative">
+          <input type="text" id="distance" name="distance" value="5" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
+          <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
+        </div>
 
  
       </div>
@@ -64,7 +69,7 @@
             target: '#alissmap',
               defaultPostCode: 'G11AB',
               defaultLatLng: [55.86521, -4.26990],
-              defaultSearchRadius: 10000,
+              defaultSearchRadius: 5000,
               categories: []
           }
           </script>
@@ -87,7 +92,7 @@ let selectedAlissServices = [];
 let selectedPostcode = 'G11AB';
 let selectedLatLng = [55.86521, -4.26990];
 let selectedZoomLevel = 10;
-let selectedSearchRadius = 10000;
+let selectedSearchRadius = 5000;
 
 const getAlissServices = async () => {
   const resp = await fetch('https://www.aliss.org/api/v4/categories/');
