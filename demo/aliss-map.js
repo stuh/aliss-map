@@ -100,7 +100,7 @@ const getServices = async (baseurl) => {
   let services = [];
   for (const cat of categoryArray) {
     // set the baseUrl
-    const baseUrl = `${baseurl}?lat=${pclatlng[0]}&ln=${pclatlng[1]}&q=${q}&category=${cat}&postcode=${postCode}&page_size=1000&radius=${radius}&format=json&page=`;
+    const baseUrl = `${baseurl}?lat=${pclatlng[0]}&ln=${pclatlng[1]}&q=${q}&category=${cat}&postcode=${postCode}&location_type=local&page_size=1000&radius=${radius}&format=json&page=`;
     // const baseUrl = `/memberslist?q=${q}&category=${category}&postcode=${postCode}&page_size=1000&radius=${radius}&format=json&page=`;
 
     // set first page

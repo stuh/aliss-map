@@ -23,8 +23,19 @@
         <p class="text-[18px] pb-7">Follow the steps below to create your customised ALISS map.</p>
         <label for="aliss-postcode" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
         <p class="pb-3" id="aliss-postcode-hint">Enter the postcode or region you want to center the map on.</p>
-        <div class="relative"><input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="w-full border border-grey p-2 bg-lightgrey"></div>
+        <div class="relative">
+          <input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="w-full border border-grey p-2 bg-lightgrey">
+        </div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
+
+        <p class="block py-4" id="aliss-location-hint">How far in km from the location would you like to show services? </p>
+        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="5" aria-describedby="aliss-location-hint">
+        <div class="relative">
+          <input type="text" id="distance" name="distance" value="5" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
+          <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
+        </div>
+
+ 
       </div>
       <div class="flex flex-col mt-8">
         <label for="aliss-services" class="text-darkblue font-black heading1 pb-3">Step 2: Category Selection</label>
@@ -58,7 +69,7 @@
             target: '#alissmap',
               defaultPostCode: 'G11AB',
               defaultLatLng: [55.86521, -4.26990],
-              defaultSearchRadius: 10000,
+              defaultSearchRadius: 5000,
               categories: []
           }
           </script>
@@ -81,6 +92,8 @@ let selectedAlissServices = [];
 let selectedPostcode = 'G11AB';
 let selectedLatLng = [55.86521, -4.26990];
 let selectedZoomLevel = 10;
+let selectedSearchRadius = 5000;
+
 const getAlissServices = async () => {
   const resp = await fetch('https://www.aliss.org/api/v4/categories/');
   const data = await resp.json();
@@ -116,32 +129,46 @@ const addServicesToSelect = async () => {
   }
 };
 
-const createCheckboxListFromJSON = (data, level = 1) => {
+const createCheckboxListFromJSON = (data, level = 1, targetdiv) => {
     // Base case: if the data is empty, return an empty string
     if (!data || data.length === 0) {
         return '';
     }
     // Start an unordered list
-    let html = `<ul class="ml-8 pt-2 ${level == 1 ? '' : ''}">`;
+    let html = `<ul class="ml-8 pt-2 ${level == 1 ? '' : 'hidden'}" id="${targetdiv}" role="group" aria-level="${level}">`;
     // Iterate over each item in the data
     data.forEach(item => {
         // Create a list item for the current category with a checkbox
+        const hasSubCategories = item.sub_categories && item.sub_categories.length > 0;
+        const toggleId = `toggle-${item.slug}`; // Unique ID for each toggle button
+        const ariaExpanded = hasSubCategories ? 'false' : ''; // ARIA attribute for expandable items
+
         html += `
-            <li >
-                <label class="flex items-center gap-2 py-1">
-                    <input type="checkbox" id="category-${item.slug}" name="categories" value="${item.slug}" class="w-6 h-6 border-almostblack">
-                    
+            <li role="treeitem" aria-expanded="${ariaExpanded}" id="treeitem-${item.slug}" aria-labelledby="label-${item.slug}">
+              <div class="flex">
+                <label id="label-${item.slug}" class="flex items-center gap-2 py-1">
+                    <input type="checkbox" id="category-${item.slug}" name="categories" value="${item.slug}" class="w-6 h-6 border-almostblack" aria-labelledby="label-${item.slug}">
         `;
-        // if the category has a non null icon value then add the icon to the label
+        // If the category has a non-null icon value, then add the icon to the label
         if (item.icon) {
-            html += `<i class="text-almostblack text-[16px]  ${item.icon}"></i>`;
+            html += `<i class="text-almostblack text-[16px] ${item.icon}"></i>`;
         }
-        html += `<span class="text-base font-normal">${item.name}</span>
-                </label>
-        `;
+        html += `<span class="text-base font-normal">${item.name}</span>`;
+        
+        html += `</label>`;
+        if (hasSubCategories) {
+            html += `<button 
+                    class="tree-toggle text-darkblue text-[16px] fas fa-angle-down ml-2" 
+                    aria-controls="${toggleId}"
+                    aria-label="Expand ${item.name}"
+                    aria-expanded="false"
+                    data-target="#${toggleId}"
+                ></button>`;
+        }
+        html += `</div>`;
         // Recursively generate the subcategories, if they exist
-        if (item.sub_categories && item.sub_categories.length > 0) {
-            html += createCheckboxListFromJSON(item.sub_categories, level + 1);
+        if (hasSubCategories) {
+            html += createCheckboxListFromJSON(item.sub_categories, level + 1, toggleId);
         }
         // Close the list item
         html += '</li>';
@@ -149,8 +176,148 @@ const createCheckboxListFromJSON = (data, level = 1) => {
     // Close the unordered list
     html += '</ul>';
     return html;
+};
+
+
+// Event listener for toggling subcategories and updating aria-expanded attributes
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('tree-toggle')) {
+    const target = document.querySelector(e.target.dataset.target);
+    const isExpanded = e.target.getAttribute('aria-expanded') === 'true';
+    
+    // Toggle visibility and ARIA attributes
+    target.classList.toggle('hidden');
+    e.target.setAttribute('aria-expanded', !isExpanded);
+    e.target.classList.toggle('fa-angle-down');
+    e.target.classList.toggle('fa-angle-up');
+    
+    // Update parent treeitem aria-expanded attribute
+    const parentTreeItem = e.target.closest('[role="treeitem"]');
+    if (parentTreeItem) {
+      parentTreeItem.setAttribute('aria-expanded', !isExpanded);
+    }
+  }
+});
+
+// Keyboard handlers for tree navigation with ARIA support
+document.addEventListener('keydown', (e) => {
+  const focusedElement = document.activeElement;
+  if (focusedElement.type === 'checkbox') {
+    const parent = focusedElement.parentElement.parentElement;
+    const treeToggle = parent.querySelector('.tree-toggle');
+    const subList = treeToggle ? document.querySelector(treeToggle.dataset.target) : null;
+    
+    switch (e.key) {
+      case 'ArrowRight':
+        if (treeToggle && subList && subList.classList.contains('hidden')) {
+          // Opens the node without moving focus
+          subList.classList.remove('hidden');
+          treeToggle.classList.remove('fa-angle-down');
+          treeToggle.classList.add('fa-angle-up');
+          treeToggle.setAttribute('aria-expanded', 'true');
+          parent.setAttribute('aria-expanded', 'true');
+        } else if (treeToggle && subList && !subList.classList.contains('hidden')) {
+          const firstChildCheckbox = subList.querySelector('input[type="checkbox"]');
+          if (firstChildCheckbox) firstChildCheckbox.focus();
+        }
+        break;
+
+      case 'ArrowLeft':
+        if (treeToggle && subList && !subList.classList.contains('hidden')) {
+          // Closes the node
+          subList.classList.add('hidden');
+          treeToggle.classList.add('fa-angle-down');
+          treeToggle.classList.remove('fa-angle-up');
+          treeToggle.setAttribute('aria-expanded', 'false');
+          parent.setAttribute('aria-expanded', 'false');
+        } else if (parent.parentElement && parent.parentElement.classList.contains('ml-8')) {
+          const parentCheckbox = parent.parentElement.previousElementSibling.querySelector('input[type="checkbox"]');
+          if (parentCheckbox) parentCheckbox.focus();
+        }
+        break;
+
+      case 'ArrowDown':
+        moveFocus(focusedElement, 'next');
+        break;
+
+      case 'ArrowUp':
+        moveFocus(focusedElement, 'previous');
+        break;
+
+      case 'Home':
+        const firstCheckbox = document.querySelector('input[type="checkbox"]');
+        if (firstCheckbox) firstCheckbox.focus();
+        break;
+
+      case 'End':
+        const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+        if (allCheckboxes.length > 0) {
+          allCheckboxes[allCheckboxes.length - 1].focus();
+        }
+        break;
+
+      case 'Enter':
+        focusedElement.click();
+        break;
+    }
+  }
+});
+
+// Helper function to move focus to the next or previous checkbox
+function moveFocus(currentCheckbox, direction) {
+  const allCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+  const visibleCheckboxes = allCheckboxes.filter(checkbox => !checkbox.closest('ul').classList.contains('hidden'));
+  const currentIndex = visibleCheckboxes.indexOf(currentCheckbox);
+
+  if (direction === 'next' && currentIndex < visibleCheckboxes.length - 1) {
+    visibleCheckboxes[currentIndex + 1].focus();
+  } else if (direction === 'previous' && currentIndex > 0) {
+    visibleCheckboxes[currentIndex - 1].focus();
+  }
 }
 
+
+// Getting references to the HTML elements
+const slider = document.getElementById('slider');
+const distanceInput = document.getElementById('distance');
+
+// Function to update the value of alissDistance and keep elements in sync
+function updateDistance(value) {
+    // Ensure the value is between 1 and 100
+    value = Math.min(Math.max(value, 1), 100);
+
+    // Update alissDistance
+    selectedSearchRadius = value*1000;
+
+    // Update the slider and input box values
+    slider.value = value;
+    distanceInput.value = value;
+
+    outputWidgetCode();
+
+}
+
+// Debounce function to limit the rate of execution
+function debounce(func, delay) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+// Debounced version of the updateDistance function
+const debouncedUpdateDistance = debounce(updateDistance, 300); // 300ms delay
+
+// Event listener for slider input with debouncing
+slider.addEventListener('input', function () {
+    debouncedUpdateDistance(this.value);
+});
+
+// Event listener for text input change
+distanceInput.addEventListener('input', function() {
+    updateDistance(this.value);
+});
 
 
 const postCodeInput = document.querySelector('#aliss-postcode');
@@ -204,7 +371,7 @@ const outputWidgetCode = () => {
     defaultZoom: selectedZoomLevel,
     defaultPostCode: selectedPostcode,
     defaultLatLng: selectedLatLng,
-    defaultSearchRadius: 10000,
+    defaultSearchRadius: selectedSearchRadius,
     categories: selectedAlissServices
   }
 
@@ -219,7 +386,7 @@ console.log(typeof selectedAlissServices);
     defaultZoom: ${selectedZoomLevel},
     defaultPostCode: '${selectedPostcode}',
     defaultLatLng: [${selectedLatLng}],
-    defaultSearchRadius: 10000,
+    defaultSearchRadius: ${selectedSearchRadius},
     categories: ${JSON.stringify(selectedAlissServices)}
   }<\/script>
   <!-- End Include the ALISS Map widget script -->
@@ -355,6 +522,30 @@ postCodeInput.addEventListener('input', () => {
     clearIcon.classList.remove('block');
   }
 });
+
+// add a clear icon for the distance input field that clears the input field and only shows when there is text in the fields
+const clearDistanceIcon = document.createElement('i');
+clearDistanceIcon.classList.add('fas', 'fa-square-xmark', 'absolute', 'right-[10px]', 'top-[10px]', 'hidden', 'text-darkblue', 'cursor-pointer', 'text-[1.8rem]', 'text-bold');
+clearDistanceIcon.addEventListener('click', () => {
+  distanceInput.value = '10';
+  distanceInput.focus();
+  clearDistanceIcon.classList.add('hidden');
+  clearDistanceIcon.classList.remove('block');
+  // trigger the change event on the distance input
+  const event = new Event('input');
+  distanceInput.dispatchEvent(event);
+});
+distanceInput.insertAdjacentElement('afterend', clearDistanceIcon);
+distanceInput.addEventListener('input', () => {
+  if (distanceInput.value.length > 0) {
+    clearDistanceIcon.classList.remove('hidden');
+    clearDistanceIcon.classList.add('block');
+  } else {
+    clearDistanceIcon.classList.add('hidden');
+    clearDistanceIcon.classList.remove('block');
+  }
+});
+
 
 
 </script>
