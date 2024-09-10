@@ -523,28 +523,6 @@ postCodeInput.addEventListener('input', () => {
   }
 });
 
-// add a clear icon for the distance input field that clears the input field and only shows when there is text in the fields
-const clearDistanceIcon = document.createElement('i');
-clearDistanceIcon.classList.add('fas', 'fa-square-xmark', 'absolute', 'right-[10px]', 'top-[10px]', 'hidden', 'text-darkblue', 'cursor-pointer', 'text-[1.8rem]', 'text-bold');
-clearDistanceIcon.addEventListener('click', () => {
-  distanceInput.value = '10';
-  distanceInput.focus();
-  clearDistanceIcon.classList.add('hidden');
-  clearDistanceIcon.classList.remove('block');
-  // trigger the change event on the distance input
-  const event = new Event('input');
-  distanceInput.dispatchEvent(event);
-});
-distanceInput.insertAdjacentElement('afterend', clearDistanceIcon);
-distanceInput.addEventListener('input', () => {
-  if (distanceInput.value.length > 0) {
-    clearDistanceIcon.classList.remove('hidden');
-    clearDistanceIcon.classList.add('block');
-  } else {
-    clearDistanceIcon.classList.add('hidden');
-    clearDistanceIcon.classList.remove('block');
-  }
-});
 
 
 
