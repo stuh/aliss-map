@@ -37,13 +37,8 @@
     @apply text-[20px]/[23px] font-normal px-4 py-3;
   }
 
-  .aliss-map  #aliss-postcode, .aliss-map #aliss-q{
-    @apply font-body font-normal text-base mr-5;
-  }
-  .aliss-map  .aliss-search-button{
-    @apply text-[20px] font-bold min-w-[150px] px-[32px] py-[12px] border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none;
-
-  }
+ 
+  
   .aliss-map h3.service-title{
     @apply text-[24px] font-black text-darkblue;
   }
@@ -59,4 +54,13 @@
     @apply fill-darkblue;
   }
   
+  
+}
+
+.aliss-map  .aliss-search-button{
+  @apply text-[20px] font-bold min-w-[150px] px-[32px]  border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none;
+
+}
+.aliss-map  #aliss-postcode, .aliss-map #aliss-q{
+  @apply font-body font-normal text-base mr-5 ;
 }
