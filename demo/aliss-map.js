@@ -96,8 +96,9 @@ const getServices = async (baseurl) => {
   const radius = alissDefaults.defaultSearchRadius;
   // category might have multiple comma seperated valueds so we need to split them into an array, eg. food-and-nutrition, money
   const categoryArray = getSelectedCategory().split(',');
-  // we can then loop through the categories and add them all the services for each one to the services array
-  let services = [];
+  // we can then loop through the categories and add all the services for each one to a services Map, we're using a map with id as the key so we can avoid duplication of services in the list
+  let servicesMap = new Map(); // Use a Map to store unique services
+
   for (const cat of categoryArray) {
     // set the baseUrl
     const baseUrl = `${baseurl}?lat=${pclatlng[0]}&ln=${pclatlng[1]}&q=${q}&category=${cat}&postcode=${postCode}&location_type=local&page_size=1000&radius=${radius}&format=json&page=`;
@@ -122,8 +123,10 @@ const getServices = async (baseurl) => {
           const { name, gcfn, description, locations, url, phone, email, organisation, permalink, id } = service;
           // for each service calulcate its distance from the currently searched postcode, we'll sort by this later when building the card list below the map
           const distance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], locations[0]?.latitude || 0, locations[0]?.longitude || 0)
-          // add the object to the services Array
-          services.push({ name, gcfn, description, locations, url, phone, email, organisation, distance, permalink, id });
+          // Only add the service if it's not already in the Map
+          if (!servicesMap.has(id)) {
+            servicesMap.set(id, { id, name, gcfn, description, locations, url, phone, email, organisation, distance, permalink });
+          }
         });
         // increment the page with 1 on each loop
         page++;
@@ -134,6 +137,9 @@ const getServices = async (baseurl) => {
       // keep running until there's no next page or if count is 0
     } while (lastResult.next !== null && lastResult.count > 0);
   };
+
+  // Convert the Map values to an array
+  const services = Array.from(servicesMap.values());
   // let's return the services array of objects
   return services;
 
@@ -539,7 +545,6 @@ const buildCategoryRadioButtons = (categories) => {
   // add listener to the radio buttons
   document.querySelectorAll('input[name="category"]').forEach((elem) => {
     elem.addEventListener("change", function(event) {
-      console.log('category changed');
       doSearch();
     });
   });
