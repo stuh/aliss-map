@@ -7,12 +7,12 @@ aliss-map.js is a javascript plugin for anyone who wants to easily embed a map o
 ## Basic Usage
 Include the Aliss Map embed code in your page and the Map and Service list will display. You can create this manually (see below for options) or use our simple map builder tool to create your embed code.
 
-#### &rarr; [Use the ALISS Map Creator](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html)
+#### &rarr; [Use the ALISS Map Creator](https://map.aliss.org/dist/index.html)
 
 ```html
   <div id="alissmap"></div>
 
-  <script src="https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/demo/aliss-map.js" type="text/javascript" defer></script>
+  <script src="https://map.aliss.org/dist/aliss-map.js" type="text/javascript" defer></script>
   <script>  
     alissMapConfig = {
       target: '#alissmap',
@@ -75,12 +75,12 @@ Here are the available options you can add to your alissMapConfig object:
 | `defaultSearchRadius` | `10000` | Number | The default ALISS search radius |
 | `categories` | `null` | Array | ALISS category slugs you want to show. |
 
-You can find the full list of categories including slugs via the [ALISS API](https://www.aliss.org/api/v4/categories/) or use our [map builder tool to create your embed](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
+You can find the full list of categories including slugs via the [ALISS API](https://www.aliss.org/api/v4/categories/) or use our [map builder tool to create your embed](https://map.aliss.org/dist/index.html).
 
 
 ## Links
 
-[Demo page](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/demo/) and [ALISS Map Creator](https://66b4d3c4437cd415a2edf090--glittery-toffee-67851d.netlify.app/dist/index.html).
+[Demo page](https://map.aliss.org/demo/) and [ALISS Map Creator](https://map.aliss.org/dist/index.html).
 
 
 ## Links
