@@ -654,7 +654,6 @@ style.innerHTML = `
         position:relative;
         margin-bottom:40px;
         margin-top:40px;
-        background:#f0f4f9;
         padding:20px;
 
       }
