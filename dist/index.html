@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://use.typekit.net/mzk4tpf.css">
   <script src="https://kit.fontawesome.com/b05dd168a1.js" crossorigin="anonymous"></script>
   <link href="/dist/main.css" rel="stylesheet">
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCvj5HcmgDF8tOQriPKdBjE9IF5jaDBJU4&amp;libraries=places&amp;v=weekly&amp;callback=initMap" defer="" async=""></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBd2IOC0hTdds5yllIOHwwi1d46sQ9zX2g&amp;libraries=places&amp;v=weekly&amp;callback=initMap" defer="" async=""></script>
 </head>
 <body class="bg-white">
 <header class="bg-alissblue flex justify-start items-center h-[136px]">
@@ -439,33 +439,87 @@ document.querySelector('#copy-code').addEventListener('click', copyToClipboard);
 addServicesToSelect()
 
 // load the following when the google maps script has loaded
-function initMap() {
+ function initMap() {
+  // define center
   const center = { lat: 50.064192, lng: -130.605469 };
-
+  // input field for the postcode
   const input = document.getElementById("aliss-postcode");
+  // set options for the autocomplete
   const options = {
     componentRestrictions: { country: "gb" }
   };
+  // create the autocomplete object
   const autocomplete = new google.maps.places.Autocomplete(input, options);
 
 // this handles people who hit enter on the autocomplete field without selecting a place
 // it basically simulates a down arrow key press to select the first item in the autocomplete list
   enableEnterKey(input)
 
+  // Define exception mappings for places that don't return a postcode from the postcode API 
+  const islandMappings = {
+    'shetland': 'Lerwick',
+    'orkney': 'Kirkwall',
+    'arran': 'Brodick',
+    'lewis': 'Stornoway',
+    'harris': 'Stornoway',
+    'hebrides': 'Stornoway',
+    'highland': 'Inverness'
+  };
 
-  autocomplete.addListener("place_changed", function() {
+// add a listener to the autocomplete field that listens for a place_changed event
+  autocomplete.addListener("place_changed", async function() {
+    // get the place from the autocomplete object
     const place = autocomplete.getPlace();
     
+    // check we have a place
     if (!place.geometry) {
       console.log("No geometry available for this place");
       return;
     }
-    console.log(place);
 
-    // Extract the latitude and longitude
-    const lat = place.geometry.location.lat();
-    const lng = place.geometry.location.lng();
+    // get the lat and lng from the place but first check for any exceptions in rare cases we cannot get a postcode from the API
+    const addressLower = place.formatted_address.toLowerCase();
+    let alternatePlaceName;
 
+    switch (true) {
+      case addressLower.includes('shetland'):
+        alternatePlaceName = islandMappings.shetland;
+        break;
+      case addressLower.includes('orkney'):
+        alternatePlaceName = islandMappings.orkney;
+        break;
+      case addressLower.includes('arran'):
+        alternatePlaceName = islandMappings.arran;
+        break;
+      case addressLower.includes('highland'):
+        alternatePlaceName = islandMappings.highland;
+        break;
+      case addressLower.includes('hebrides'):
+      case addressLower.includes('lewis'):
+      case addressLower.includes('harris'):
+        alternatePlaceName = islandMappings.lewis;
+        break;
+      default:
+        // Use original place if no mapping found
+        lat = place.geometry.location.lat();
+        lng = place.geometry.location.lng();
+        alternatePlaceName = null;
+    }
+
+    // If an alternate place name was found, use it to get the coordinates
+    if (alternatePlaceName) {
+      input.value = alternatePlaceName;
+      try {
+        const coords = await getAlternatePlaceNameCoordinates(alternatePlaceName);
+        lat = coords.lat;
+        lng = coords.lng;
+      } catch (error) {
+        console.error(`Error getting ${alternatePlaceName} coordinates:`, error);
+        return;
+      }
+    }
+
+    // Continue with existing postcode fetch...
     // Query postcodes.io API using lat/lng to get the postcode
     fetch(`https://api.postcodes.io/postcodes?lon=${lng}&lat=${lat}&radius=10000`)
       .then(response => response.json())
@@ -495,6 +549,27 @@ function initMap() {
       });
   });
 
+}
+// function to get the lat and lng from a placename using the Google PlacesService
+const getAlternatePlaceNameCoordinates = async (alternatePlaceName) => {
+  return new Promise((resolve, reject) => {
+    const placesService = new google.maps.places.PlacesService(document.createElement('div'));
+    placesService.findPlaceFromQuery({
+      query: alternatePlaceName,
+      fields: ['geometry']
+    }, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
+        const altPlace = results[0];
+        const coordinates = {
+          lat: altPlace.geometry.location.lat(),
+          lng: altPlace.geometry.location.lng()
+        };
+        resolve(coordinates);
+      } else {
+        reject(new Error('Could not find alternate places coordinates'));
+      }
+    });
+  });
 }
 
 // function to handle people who hit enter on the autocomplete field without selecting a place
@@ -526,6 +601,8 @@ function enableEnterKey(input) {
 
     input.addEventListener = addEventListenerWrapper
   }
+
+
 // add a clear icon to the postcode input field that clears the input field and only shows when there is text in the field
 const clearIcon = document.createElement('i');
 clearIcon.classList.add('fas', 'fa-square-xmark', 'absolute', 'right-[10px]', 'top-[10px]', 'hidden', 'text-darkblue', 'cursor-pointer', 'text-[1.8rem]', 'text-bold');
