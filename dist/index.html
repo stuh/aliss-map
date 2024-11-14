@@ -343,7 +343,7 @@ postCodeInput.addEventListener('change', async (e) => {
     }
     document.querySelector('.po_error').classList.remove('hidden');
     document.querySelector('.po_error').classList.add('block');
-    document.querySelector('.po_error').textContent = 'Please enter a valid UK postcode';
+    document.querySelector('.po_error').textContent = 'Please enter a valid UK postcode or place name';
     postCodeInput.setAttribute('aria-invalid', 'true');
     return;
   }
@@ -441,20 +441,17 @@ addServicesToSelect()
 // load the following when the google maps script has loaded
 function initMap() {
   const center = { lat: 50.064192, lng: -130.605469 };
-  const defaultBounds = {
-    north: center.lat + 0.1,
-    south: center.lat - 0.1,
-    east: center.lng + 0.1,
-    west: center.lng - 0.1,
-  };
+
   const input = document.getElementById("aliss-postcode");
   const options = {
-    bounds: defaultBounds,
-    componentRestrictions: { country: "gb" },
-    fields: ["geometry", "place_id"], // Focus on geometry and place_id
-    strictBounds: false,
+    componentRestrictions: { country: "gb" }
   };
   const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+// this handles people who hit enter on the autocomplete field without selecting a place
+// it basically simulates a down arrow key press to select the first item in the autocomplete list
+  enableEnterKey(input)
+
 
   autocomplete.addListener("place_changed", function() {
     const place = autocomplete.getPlace();
@@ -463,13 +460,14 @@ function initMap() {
       console.log("No geometry available for this place");
       return;
     }
+    console.log(place);
 
     // Extract the latitude and longitude
     const lat = place.geometry.location.lat();
     const lng = place.geometry.location.lng();
 
     // Query postcodes.io API using lat/lng to get the postcode
-    fetch(`https://api.postcodes.io/postcodes?lon=${lng}&lat=${lat}`)
+    fetch(`https://api.postcodes.io/postcodes?lon=${lng}&lat=${lat}&radius=10000`)
       .then(response => response.json())
       .then(data => {
         if (data && data.result && data.result.length > 0) {
@@ -496,9 +494,38 @@ function initMap() {
         console.error("Error fetching postcode:", error);
       });
   });
+
 }
 
+// function to handle people who hit enter on the autocomplete field without selecting a place
+function enableEnterKey(input) {
 
+    /* Store original event listener */
+    const _addEventListener = input.addEventListener
+
+    const addEventListenerWrapper = (type, listener) => {
+      if (type === 'keydown') {
+        /* Store existing listener function */
+        const _listener = listener
+        listener = (event) => {
+          /* Simulate a 'down arrow' keypress if no address has been selected */
+          const suggestionSelected = document.getElementsByClassName('pac-item-selected').length
+          if (event.key === 'Enter' && !suggestionSelected) {
+            const e = new KeyboardEvent('keydown', { 
+              key: 'ArrowDown', 
+              code: 'ArrowDown', 
+              keyCode: 40, 
+            })
+            _listener.apply(input, [e])
+          }
+          _listener.apply(input, [event])
+        }
+      }
+      _addEventListener.apply(input, [type, listener])
+    }
+
+    input.addEventListener = addEventListenerWrapper
+  }
 // add a clear icon to the postcode input field that clears the input field and only shows when there is text in the field
 const clearIcon = document.createElement('i');
 clearIcon.classList.add('fas', 'fa-square-xmark', 'absolute', 'right-[10px]', 'top-[10px]', 'hidden', 'text-darkblue', 'cursor-pointer', 'text-[1.8rem]', 'text-bold');
