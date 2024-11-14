@@ -457,13 +457,15 @@ addServicesToSelect()
 
   // Define exception mappings for places that don't return a postcode from the postcode API 
   const islandMappings = {
-    'shetland': 'Lerwick',
-    'orkney': 'Kirkwall',
-    'arran': 'Brodick',
-    'lewis': 'Stornoway',
-    'harris': 'Stornoway',
-    'hebrides': 'Stornoway',
-    'highland': 'Inverness'
+    'shetland': 'Lerwick, UK',
+    'orkney': 'Kirkwall, UK',
+    'arran': 'Brodick, UK',
+    'lewis': 'Stornoway, UK',
+    'harris': 'Stornoway, UK',
+    'hebrides': 'Stornoway, UK',
+    'highland': 'Inverness, UK',
+    'perthandkinross': 'Perth, UK',
+    'angus': 'Forfar, UK',
   };
 
 // add a listener to the autocomplete field that listens for a place_changed event
@@ -499,6 +501,12 @@ addServicesToSelect()
       case addressLower.includes('harris'):
         alternatePlaceName = islandMappings.lewis;
         break;
+      case addressLower.includes('perth and kinross'):
+        alternatePlaceName = islandMappings.perthandkinross;
+        break;
+      case addressLower.includes('angus'):
+        alternatePlaceName = islandMappings.angus;
+        break;
       default:
         // Use original place if no mapping found
         lat = place.geometry.location.lat();
@@ -508,6 +516,7 @@ addServicesToSelect()
 
     // If an alternate place name was found, use it to get the coordinates
     if (alternatePlaceName) {
+      console.log(`Using alternate place name: ${alternatePlaceName}`);
       input.value = alternatePlaceName;
       try {
         const coords = await getAlternatePlaceNameCoordinates(alternatePlaceName);
