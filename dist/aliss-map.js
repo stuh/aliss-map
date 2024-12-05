@@ -69,8 +69,9 @@ document.addEventListener('click', function(e){
   }
 });
 
-// get the chosen category, default to food-and-nutrition
+// get the chosen category, default to all
 const getSelectedCategory = () => {
+  // get the selected category or get all if none selected
   const category = document.querySelector('input[name="category"]:checked')?.value || '';
   return category;
 }
@@ -94,6 +95,11 @@ const getServices = async (baseurl) => {
   const q = getQuery();
   const category = getSelectedCategory();
   const radius = alissDefaults.defaultSearchRadius;
+  // get the communityGroups from the config, if any exist then we need to replace the commas with semi colons
+  const communityGroups = Array.isArray(alissDefaults.communityGroups)
+  ? alissDefaults.communityGroups.join(';')
+  : (alissDefaults.communityGroups || '').split(',').join(';');
+
   // category might have multiple comma seperated valueds so we need to split them into an array, eg. food-and-nutrition, money
   const categoryArray = getSelectedCategory().split(',');
   // we can then loop through the categories and add all the services for each one to a services Map, we're using a map with id as the key so we can avoid duplication of services in the list
@@ -101,7 +107,7 @@ const getServices = async (baseurl) => {
 
   for (const cat of categoryArray) {
     // set the baseUrl
-    const baseUrl = `${baseurl}?lat=${pclatlng[0]}&ln=${pclatlng[1]}&q=${q}&category=${cat}&postcode=${postCode}&page_size=1000&radius=${radius}&format=json&page=`;
+    const baseUrl = `${baseurl}?lat=${pclatlng[0]}&ln=${pclatlng[1]}&q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&page_size=1000&radius=${radius}&format=json&page=`;
     // const baseUrl = `/memberslist?q=${q}&category=${category}&postcode=${postCode}&page_size=1000&radius=${radius}&format=json&page=`;
 
     // set first page
@@ -355,7 +361,7 @@ async function doSearch() {
   loader.classList.remove('load-hide');
 
   // get all the services from the API into an arrayOfObjects
-  const servicesList = await getServices('https://api.aliss.org/v4/services/');
+  const servicesList = await getServices('https://api.aliss.org/v5/services/');
 
   // now sort them but distance into a new arrayOfObjects
   const sortedArray = servicesList.sort((a, b) => {  
@@ -764,7 +770,6 @@ const initALISSMap = () => {
     event.preventDefault();
     doPostCodeSearch();
   });
-
 
   // add click handler for the postcode box, includes the clear button 
   postcode_field.addEventListener('search', (event) => {

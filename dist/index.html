@@ -46,10 +46,14 @@
       </div>
      
       <div class="flex flex-col mt-8">
-        <label for="aliss-communitygroups" class="text-darkblue font-black heading1 pb-3">Select who categories </label>
-        <p class="pb-3" >Select the service categories you want to include on your map.</p>
+        <label for="aliss-communitygroups" class="font-black heading2 pb-3">Select who categories (optional) <button class=" text-darkblue text-[16px] fas fa-angle-down ml-2" 
+                    aria-controls="aliss-communitygroups"
+                    aria-label="Expand community group categories"
+                    aria-expanded="false"
+                    data-target="#aliss-communitygroups"
+                ></button></label>
         
-        <div id="aliss-communitygroups" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto">
+        <div id="aliss-communitygroups" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto hidden">
         </div>
       </div>
      
@@ -79,7 +83,8 @@
               defaultPostCode: 'G11AB',
               defaultLatLng: [55.86521, -4.26990],
               defaultSearchRadius: 5000,
-              categories: []
+              categories: [],
+              communityGroups: []
           }
           </script>
       </div>
@@ -318,6 +323,24 @@ function moveFocus(currentCheckbox, direction) {
   }
 }
 
+function toggleCommunityGroups() {
+  const button = document.querySelector('button[aria-controls="aliss-communitygroups"]');
+  const target = document.getElementById('aliss-communitygroups');
+  
+  button.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+    button.setAttribute('aria-expanded', !isExpanded);
+    
+    // Toggle fa-angle-down/fa-angle-up classes
+    button.classList.toggle('fa-angle-down');
+    button.classList.toggle('fa-angle-up');
+    
+    // Toggle hidden class on target
+    target.classList.toggle('hidden');
+  });
+}
+document.addEventListener('DOMContentLoaded', toggleCommunityGroups);
 
 // Getting references to the HTML elements
 const slider = document.getElementById('slider');
