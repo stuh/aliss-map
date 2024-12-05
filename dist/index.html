@@ -44,6 +44,15 @@
         <div id="aliss-services" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto">
         </div>
       </div>
+     
+      <div class="flex flex-col mt-8">
+        <label for="aliss-communitygroups" class="text-darkblue font-black heading1 pb-3">Select who categories </label>
+        <p class="pb-3" >Select the service categories you want to include on your map.</p>
+        
+        <div id="aliss-communitygroups" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto">
+        </div>
+      </div>
+     
       <div class="mt-8">
         <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 3: Code</label>
         <p class="pb-3" id="aliss-widget-output-hint">Copy the code to be added to your site.</p>
@@ -87,32 +96,34 @@
 // add an event listener to the select element that listens for a change event
 // when the event is triggered, get the value of the selected option
 // log the value to the console
+// ALISS API URL
+const ALISS_API_URL = 'https://www.aliss.org/api/v5';
 
 let selectedAlissServices = [];
+let selectedCommunityGroups = [];
 let selectedPostcode = 'G11AB';
 let selectedLatLng = [55.86521, -4.26990];
 let selectedZoomLevel = 10;
 let selectedSearchRadius = 5000;
 
 const getAlissServices = async () => {
-  const resp = await fetch('https://www.aliss.org/api/v4/categories/');
+  const resp = await fetch(`${ALISS_API_URL}/categories/`);
   const data = await resp.json();
   return data.data;
 };
 
 const addServicesToSelect = async () => {
-  const select = document.querySelector('select#aliss-services');
   try {
     const data = await getAlissServices();
 
-    // Example usage:
-    const checkboxListHtml = createCheckboxListFromJSON(data);
-
+    // Generate the HTML for the checkbox list
+    const checkboxListHtml = createCheckboxListFromJSON(data, 1, 'services-div', 'sub_categories');
+  
     // Insert the generated HTML into the DOM (for example, inside a div with id "category-list")
     document.getElementById('aliss-services').innerHTML = checkboxListHtml;
     
     // add a listener to the checkboxes, when they are clicked, update the selectedAlissServices array
-    document.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+    document.querySelectorAll('#services-div input[type="checkbox"]').forEach((checkbox) => {
       checkbox.addEventListener('change', (e) => {
         const category = e.target.value;
         if (e.target.checked) {
@@ -129,19 +140,50 @@ const addServicesToSelect = async () => {
   }
 };
 
-const createCheckboxListFromJSON = (data, level = 1, targetdiv) => {
-    // Base case: if the data is empty, return an empty string
+const getAlissCommunityGroups = async () => {
+  const resp = await fetch(`${ALISS_API_URL}/community-groups/`);
+  const data = await resp.json();
+  return data.data;
+};
+
+const addCommunityGroupsToSelect = async () => {
+  try {
+    const data = await getAlissCommunityGroups();
+
+    // Generate the HTML for the checkbox list
+    const checkboxListHtml = createCheckboxListFromJSON(data, 1, 'community-groups-div', 'sub_communitygroups');
+    // Insert the generated HTML into the DOM (for example, inside a div with id "category-list")
+    document.getElementById('aliss-communitygroups').innerHTML = checkboxListHtml;
+    
+    // add a listener to the checkboxes, when they are clicked, update the selectedCommunityGroups array
+    document.querySelectorAll('#community-groups-div input[type="checkbox"]').forEach((checkbox) => {
+      checkbox.addEventListener('change', (e) => {
+        const category = e.target.value;
+        if (e.target.checked) {
+          selectedCommunityGroups.push(category);
+        } else {
+          selectedCommunityGroups = selectedCommunityGroups.filter((item) => item !== category);
+        }
+        outputWidgetCode();
+      });
+    });
+    
+  } catch (err) {
+    console.error(`Oops, something is wrong ${err}`);
+  }
+};
+
+const createCheckboxListFromJSON = (data, level = 1, targetdiv, subCategoryProp = 'sub_categories') => {
     if (!data || data.length === 0) {
         return '';
     }
-    // Start an unordered list
+
     let html = `<ul class="ml-8 pt-2 ${level == 1 ? '' : 'hidden'}" id="${targetdiv}" role="group" aria-level="${level}">`;
-    // Iterate over each item in the data
+    
     data.forEach(item => {
-        // Create a list item for the current category with a checkbox
-        const hasSubCategories = item.sub_categories && item.sub_categories.length > 0;
-        const toggleId = `toggle-${item.slug}`; // Unique ID for each toggle button
-        const ariaExpanded = hasSubCategories ? 'false' : ''; // ARIA attribute for expandable items
+        const hasSubCategories = item[subCategoryProp] && item[subCategoryProp].length > 0;
+        const toggleId = `toggle-${item.slug}`;
+        const ariaExpanded = hasSubCategories ? 'false' : '';
 
         html += `
             <li role="treeitem" aria-expanded="${ariaExpanded}" id="treeitem-${item.slug}" aria-labelledby="label-${item.slug}">
@@ -149,7 +191,7 @@ const createCheckboxListFromJSON = (data, level = 1, targetdiv) => {
                 <label id="label-${item.slug}" class="flex items-center gap-2 py-1">
                     <input type="checkbox" id="category-${item.slug}" name="categories" value="${item.slug}" class="w-6 h-6 border-almostblack" aria-labelledby="label-${item.slug}">
         `;
-        // If the category has a non-null icon value, then add the icon to the label
+
         if (item.icon) {
             html += `<i class="text-almostblack text-[16px] ${item.icon}"></i>`;
         }
@@ -166,14 +208,14 @@ const createCheckboxListFromJSON = (data, level = 1, targetdiv) => {
                 ></button>`;
         }
         html += `</div>`;
-        // Recursively generate the subcategories, if they exist
+
         if (hasSubCategories) {
-            html += createCheckboxListFromJSON(item.sub_categories, level + 1, toggleId);
+            html += createCheckboxListFromJSON(item[subCategoryProp], level + 1, toggleId, subCategoryProp);
         }
-        // Close the list item
+
         html += '</li>';
     });
-    // Close the unordered list
+
     html += '</ul>';
     return html;
 };
@@ -372,7 +414,8 @@ const outputWidgetCode = () => {
     defaultPostCode: selectedPostcode,
     defaultLatLng: selectedLatLng,
     defaultSearchRadius: selectedSearchRadius,
-    categories: selectedAlissServices
+    categories: selectedAlissServices,
+    communityGroups: selectedCommunityGroups
   }
 
 
@@ -386,7 +429,8 @@ const outputWidgetCode = () => {
     defaultPostCode: '${selectedPostcode}',
     defaultLatLng: [${selectedLatLng}],
     defaultSearchRadius: ${selectedSearchRadius},
-    categories: ${JSON.stringify(selectedAlissServices)}
+    categories: ${JSON.stringify(selectedAlissServices)},
+    communityGroups: ${JSON.stringify(selectedCommunityGroups)}
   }<\/script>
   <!-- End Include the ALISS Map widget script -->
   `
@@ -437,6 +481,7 @@ const copyToClipboard = () => {
 document.querySelector('#copy-code').addEventListener('click', copyToClipboard);
 
 addServicesToSelect()
+addCommunityGroupsToSelect()
 
 // load the following when the google maps script has loaded
  function initMap() {
