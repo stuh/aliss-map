@@ -194,6 +194,19 @@ services.forEach(service => {
       padding: [20, 20], // Add padding around bounds
       maxZoom: 13 // Prevent too much zoom
     });
+    // Set minimum zoom to current zoom level after fitting bounds
+    const currentZoom = map.getZoom();
+    map.setMinZoom(currentZoom);
+    
+    // Enable zoom in only
+    map.scrollWheelZoom.enable();
+    map.touchZoom.enable();
+
+    // Disable dragging
+    map.dragging.disable();
+    
+    // Set max bounds to prevent panning outside marker area
+    map.setMaxBounds(bounds.pad(0.1));
   }
 }
 
