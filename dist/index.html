@@ -28,7 +28,7 @@
         </div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
-        <p class="block py-4" id="aliss-location-hint">How far in km from the location would you like to show services? </p>
+        <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
         <input class="block mb-4" type="range" id="slider" min="1" max="100" value="5" aria-describedby="aliss-location-hint">
         <div class="relative">
           <input type="text" id="distance" name="distance" value="5" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
@@ -39,7 +39,7 @@
       </div>
       <div class="flex flex-col mt-8">
         <label for="aliss-services" class="text-darkblue font-black heading1 pb-3">Step 2: Category Selection</label>
-        <p class="pb-3" >Select the service categories you want to include on your map.</p>
+        <p class="pb-3" >Select the types of services you want to include on your map.</p>
         
         <div id="aliss-services" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto">
         </div>
@@ -59,7 +59,7 @@
      
       <div class="mt-8">
         <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 3: Code</label>
-        <p class="pb-3" id="aliss-widget-output-hint">Copy the code to be added to your site.</p>
+        <p class="pb-3" id="aliss-widget-output-hint">Copy the code below to be added to your site.</p>
         <textarea id="widget-output" aria-describedby="aliss-widget-output-hint" rows="12" class="w-full border border-grey bg-lightgrey" readonly="readonly"></textarea>
         <button id="copy-code" class="text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Copy the code</button>
         <span id="copyMessage" class="hidden ">Copied Successfully!</span>
