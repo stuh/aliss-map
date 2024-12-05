@@ -153,7 +153,7 @@ const getServices = async (baseurl) => {
 
 
 //function to take the services array. We iterate each service to add a marker to the markersLayer LayerGroup
-const addMarkersToMap = (services) => {
+const addMarkersToMap = async (services) => {
 
 
 // if we already have a layer group, clear it of Markers.
@@ -161,6 +161,10 @@ if (map.hasLayer(markersLayer)) {
   markersLayer.clearLayers();
 }
 
+// create an array to hold the latlngs of the markers
+const postCode = getPostCode();
+const pclatlng = await getLatLngFromPostCode(postCode)
+const validLatLngs = []; // Array to store valid coordinates
 
 // for each service build the popup and then add to the layerGroup
 services.forEach(service => {
@@ -169,21 +173,28 @@ services.forEach(service => {
     service.locations.forEach(location => {
       // build the html servicecard but use the override feature for each location
       let serviceCard = buildServiceCard(service, location);
+      
+      let locationDistance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], location.latitude || 0, location.longitude || 0)
       // add the marker if it has a latlng
-      if (location.latitude && location.longitude) {
+      if (location.latitude && location.longitude && (locationDistance < alissDefaults.defaultSearchRadius/1000)) {
         markersArray[`${service.id}${location.latitude}${location.longitude}`] = L.marker([location.latitude, location.longitude]).bindPopup(serviceCard).bindTooltip(`<strong>${service.name}</strong><br/>${location.street_address}<br/>${location.locality}`).addTo(markersLayer);
+        // add latlng to the array to be used to set the bonds of the map
+        validLatLngs.push([location.latitude, location.longitude]);
       }
-      // add latlng to the array to be used to set the bonds of the map
-      // arrayOfLatLngs.push([location.latitude, location.longitude]);
 
     });
   }
 })
 
 // set the bounds of the map and add make the map fit the bounds 
-// TODO not using as some outliers have wacky latlng compared to the postcode search they are part of - the result is the map always zoooms way out.
-// var bounds = new L.LatLngBounds(arrayOfLatLngs);
-// map.fitBounds(bounds);
+// If we have valid coordinates, fit the map to show all markers
+  if (validLatLngs.length > 0) {
+    const bounds = L.latLngBounds(validLatLngs);
+    map.fitBounds(bounds, {
+      padding: [20, 20], // Add padding around bounds
+      maxZoom: 13 // Prevent too much zoom
+    });
+  }
 }
 
 // this builds the html for a service to be used in both the map popup and list, keeps it the same.
