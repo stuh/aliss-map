@@ -177,12 +177,20 @@ services.forEach(service => {
       let locationDistance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], location.latitude || 0, location.longitude || 0)
       // add the marker if it has a latlng
       if (location.latitude && location.longitude && (locationDistance < alissDefaults.defaultSearchRadius/1000)) {
+        console.log('added within distance')
         markersArray[`${service.id}${location.latitude}${location.longitude}`] = L.marker([location.latitude, location.longitude]).bindPopup(serviceCard).bindTooltip(`<strong>${service.name}</strong><br/>${location.street_address}<br/>${location.locality}`).addTo(markersLayer);
         // add latlng to the array to be used to set the bonds of the map
         validLatLngs.push([location.latitude, location.longitude]);
       }
 
     });
+  }
+  // Update the total count display
+  if (getPostCode()) {
+    document.getElementById('aliss-totals').textContent = `${services.length} services found. ${validLatLngs.length} locations shown within ${alissDefaults.defaultSearchRadius/1000}km of ${getPostCode()}`;
+    
+  } else {
+    document.getElementById('aliss-totals').textContent = `${services.length} services found`;
   }
 })
 
@@ -191,12 +199,12 @@ services.forEach(service => {
   if (validLatLngs.length > 0) {
     const bounds = L.latLngBounds(validLatLngs);
     map.fitBounds(bounds, {
-      padding: [20, 20], // Add padding around bounds
-      maxZoom: 13 // Prevent too much zoom
+      padding: [20, 20]
     });
+    console.log('fitting bounds', validLatLngs.length)
     // Set minimum zoom to current zoom level after fitting bounds
     const currentZoom = map.getZoom();
-    map.setMinZoom(currentZoom);
+    map.setMinZoom(currentZoom-1);
     
     
     // Enable zoom in only
@@ -207,7 +215,7 @@ services.forEach(service => {
     map.dragging.disable();
     
     // Set max bounds to prevent panning outside marker area
-    map.setMaxBounds(bounds.pad(0.1));
+    map.setMaxBounds(bounds.pad(1));
   }
 }
 
@@ -314,7 +322,7 @@ const buildServiceCard = (service, locationOverride) => {
 
 const buildResultsList = (services) => {
 
-results_list.innerHTML = `<h3 style="margin-top:20px;"><strong>Services nearest to you or available in your region (${services.length})</strong></h3>`;
+results_list.innerHTML = `<h3 style="margin-top:20px;" id="aliss-totals"></h3>`;
 
 services.forEach( service => {
   
@@ -371,7 +379,6 @@ try {
       }
       
     } catch (err) {
-      console.error(`Oops, something is wrong ${err}`);
       return alissDefaults.defaultLatLng;
     }
 
@@ -394,13 +401,15 @@ async function doSearch() {
       ? 1
       : -1
   })
-
-  // add markers to the map
-  addMarkersToMap(sortedArray);
-  centerMapOnPostcode();
-
+  
   // show results list
   buildResultsList(sortedArray);
+
+  // add markers to the map await so we can calculate the total that meet the distance critieria and use it in the results list
+  await addMarkersToMap(sortedArray);
+
+  centerMapOnPostcode();
+
 
   // hide the loader
   loader.classList.add('load-hide');
@@ -440,7 +449,9 @@ const loadLeafletJS = (callback) => {
   var script = document.createElement('script');
   script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
   script.crossOrigin = "";
-  script.onload = callback;
+  if (callback) {
+    script.onload = callback;
+  }
   document.head.appendChild(script);
 }
 
@@ -661,9 +672,12 @@ style.innerHTML = `
         display:none;
       }
       .aliss-map .service-description{
-        
         margin-top:15px;
         margin-bottom:15px;
+      }
+      .aliss-map .leaflet-popup-content-wrapper .service-description{
+        overflow-y: scroll;
+        height:60px;
       }
       
       .aliss-map .service-links a{
@@ -813,12 +827,15 @@ const initALISSMap = () => {
   doSearch();
 }
 
-// when ready build the widget
+// when ready build the widget  
 document.addEventListener('DOMContentLoaded', function() {
-  // get leaflet and run init
-  loadLeafletJS(initALISSMap);
-
-  
+  // Check if target exists before loading leaflet and initializing
+  if (alissMapConfig.target && document.querySelector(alissMapConfig.target)) {
+    loadLeafletJS(initALISSMap);
+  } else {
+    console.warn('ALISS Map target element not found');
+    loadLeafletJS();
+  }
 });
 
 

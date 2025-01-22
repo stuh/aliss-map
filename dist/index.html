@@ -29,9 +29,9 @@
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
         <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
-        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="100" aria-describedby="aliss-location-hint">
+        <input class="block mb-4" type="range" id="slider" min="1" max="250" value="250" aria-describedby="aliss-location-hint">
         <div class="relative">
-          <input type="text" id="distance" name="distance" value="100" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
+          <input type="text" id="distance" name="distance" value="250" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
           <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
         </div>
 
@@ -60,7 +60,6 @@
       <div class="mt-8">
         <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 3: Preview Your Map</label>
         <button class="preview-map text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Preview Your Map</button>
-        <span id="copyMessage" class="hidden ">Copied Successfully!</span>
       </div>
 
       <div class="mt-8">
@@ -91,7 +90,7 @@
               target: '#alissmap',
                 defaultPostCode: '',
                 defaultLatLng: [55.86521, -4.26990],
-                defaultSearchRadius: 100000,
+                defaultSearchRadius: 250000,
                 categories: [],
                 communityGroups: []
             }
@@ -117,7 +116,7 @@ let selectedAlissServices = [];
 let selectedCommunityGroups = [];
 let selectedPostcode = '';
 let selectedLatLng = [55.86521, -4.26990];
-let selectedSearchRadius = 100000;
+let selectedSearchRadius = 250000;
 
 const getAlissServices = async () => {
   const resp = await fetch(`${ALISS_API_URL}/categories/`);
