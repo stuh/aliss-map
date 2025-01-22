@@ -107,7 +107,7 @@ const getServices = async (baseurl) => {
 
   for (const cat of categoryArray) {
     // set the baseUrl
-    const baseUrl = `${baseurl}?lat=${pclatlng[0]}&ln=${pclatlng[1]}&q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&page_size=1000&radius=${radius}&format=json&page=`;
+    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&page_size=1000&radius=${radius}&format=json&page=`;
     // const baseUrl = `/memberslist?q=${q}&category=${category}&postcode=${postCode}&page_size=1000&radius=${radius}&format=json&page=`;
 
     // set first page
@@ -333,27 +333,12 @@ services.forEach( service => {
 
 }
 
-// center the map on the postcode (with caching of geolocation api results)
-const centerMapOnPostcode = async () => {
-
-// get the entered postcode value
-const postcode = getPostCode()
-
-// if it's the default, we know this so don't use the API, just return our default latlng
-if (postcode == alissDefaults.defaultPostCode) {
-  // now center the map
-  // map.setView(alissDefaults.defaultLatLng, 12);
-  return
-}
-
-// if it's not the default or a previously fetched postcode, grab it from the API...
-const apilatlng = await getLatLngFromPostCode(postcode);
-
-// now center the map
-// map.setView(apilatlng, 12);
-}
-
 const getLatLngFromPostCode = async (postcode) => {
+
+  // if the postcode is empty then return the default
+if (!postcode) {
+  return [56.4907, -4.2026];
+}
 
 // if this postcode is in the cache then just return that instead of using the api
 if (postCodeToLatLngHistory[postcode]) {
@@ -408,7 +393,6 @@ async function doSearch() {
   // add markers to the map await so we can calculate the total that meet the distance critieria and use it in the results list
   await addMarkersToMap(sortedArray);
 
-  centerMapOnPostcode();
 
 
   // hide the loader

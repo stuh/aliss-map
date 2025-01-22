@@ -21,17 +21,18 @@
       <div class="flex flex-col mt-8 ">
         <h1 class="pb-7">Create your ALISS map</h1>
         <p class="text-[18px] pb-7">Follow the steps below to create your customised ALISS map.</p>
-        <label for="aliss-postcode" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
-        <p class="pb-3" id="aliss-postcode-hint">Enter the postcode or region you want to center the map on.</p>
+        <label for="aliss-location-search" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
+        <p class="pb-3" id="aliss-location-search-hint">Enter the postcode or region you want to center the map on.</p>
         <div class="relative">
-          <input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="w-full border border-grey p-2 bg-lightgrey">
+          <input type="text" id="aliss-location-search" aria-describedby="aliss-location-search-hint" name="aliss-location-search" value="" class="w-full border border-grey p-2 bg-lightgrey">
+          <input type="hidden" id="aliss-postcode"  name="aliss-postcode" value="" >
         </div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
         <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
-        <input class="block mb-4" type="range" id="slider" min="1" max="250" value="250" aria-describedby="aliss-location-hint">
+        <input class="block mb-4" type="range" id="slider" min="1" max="450" value="450" aria-describedby="aliss-location-hint">
         <div class="relative">
-          <input type="text" id="distance" name="distance" value="250" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
+          <input type="text" id="distance" name="distance" value="450" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
           <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
         </div>
 
@@ -84,7 +85,7 @@
         </div>
           
 
-          <script src="/dist/aliss-map.js" type="text/javascript" defer></script>
+          <script src="/dist/aliss-map.js?v=0.34" type="text/javascript" defer></script>
           <script type="text/javascript">
             alissMapConfig = {
               target: '#alissmap',
@@ -116,7 +117,12 @@ let selectedAlissServices = [];
 let selectedCommunityGroups = [];
 let selectedPostcode = '';
 let selectedLatLng = [55.86521, -4.26990];
-let selectedSearchRadius = 250000;
+let selectedSearchRadius = 1000000;
+
+
+// location input references
+const locationInput = document.querySelector('#aliss-location-search');
+const postCodeInputHidden = document.querySelector('#aliss-postcode');
 
 const getAlissServices = async () => {
   const resp = await fetch(`${ALISS_API_URL}/categories/`);
@@ -356,7 +362,7 @@ const distanceInput = document.getElementById('distance');
 // Function to update the value of alissDistance and keep elements in sync
 function updateDistance(value) {
     // Ensure the value is between 1 and 100
-    value = Math.min(Math.max(value, 1), 250);
+    value = Math.min(Math.max(value, 1), 450);
 
     // Update alissDistance
     selectedSearchRadius = value*1000;
@@ -369,21 +375,9 @@ function updateDistance(value) {
 
 }
 
-// Debounce function to limit the rate of execution
-function debounce(func, delay) {
-    let timeout;
-    return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), delay);
-    };
-}
-
-// Debounced version of the updateDistance function
-const debouncedUpdateDistance = debounce(updateDistance, 300); // 300ms delay
-
-// Event listener for slider input with debouncing
+// Event listener for slider input debouncing
 slider.addEventListener('input', function () {
-    debouncedUpdateDistance(this.value);
+    updateDistance(this.value);
 });
 
 // Event listener for text input change
@@ -392,47 +386,6 @@ distanceInput.addEventListener('input', function() {
 });
 
 
-const postCodeInput = document.querySelector('#aliss-postcode');
-postCodeInput.addEventListener('change', async (e) => {
-  selectedPostcode = e.target.value;
-
-  // reset any aria warnings and errors
-  postCodeInput.setAttribute('aria-invalid', 'false');
-  document.querySelector('.po_error').classList.remove('block');
-  document.querySelector('.po_error').classList.add('hidden');
-
-  // the postcoe regex
-  rePostCode = /^(([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2}))$/;
-
-  // do the test
-  const postCodeOk = rePostCode.test(selectedPostcode);
-
-  // if not a good postcode then show the error message and update its content to "Invalid postcode"
-  // also set the aria-invalid to true
-  // except if its Scotland, UK as this needs to remain
-  if (!postCodeOk && selectedPostcode !== 'Scotland, UK') {
-    if (selectedPostcode.length === 0) {
-      return;
-    }
-    document.querySelector('.po_error').classList.remove('hidden');
-    document.querySelector('.po_error').classList.add('block');
-    document.querySelector('.po_error').textContent = 'Please enter a valid UK postcode or place name';
-    postCodeInput.setAttribute('aria-invalid', 'true');
-    return;
-  }
-  
-
-  // get selected latlng from the postcode
-  selectedLatLng = await getLatLngFromPostCode(selectedPostcode);
-
-  // reset any warnings
-  document.querySelector('.po_error').classList.remove('block');
-  document.querySelector('.po_error').classList.add('hidden');
-
-  // run the output to the widget box for copy and pasting
-  // outputWidgetCode();
-
-});
 
 // when preview button is clicked output the widget code
 document.querySelectorAll('.preview-map').forEach(button => {
@@ -533,7 +486,8 @@ addCommunityGroupsToSelect()
   // define center
   const center = { lat: 50.064192, lng: -130.605469 };
   // input field for the postcode
-  const input = document.getElementById("aliss-postcode");
+  const input = document.getElementById("aliss-location-search");
+  const hiddenInput = document.getElementById("aliss-postcode");
   // set options for the autocomplete
   const options = {
     componentRestrictions: { country: "gb" }
@@ -615,7 +569,7 @@ addCommunityGroupsToSelect()
     // If an alternate place name was found, use it to get the coordinates
     if (alternatePlaceName) {
       console.log(`Using alternate place name: ${alternatePlaceName}`);
-      input.value = alternatePlaceName;
+      hiddenInput.value = alternatePlaceName;
       try {
         const coords = await getAlternatePlaceNameCoordinates(alternatePlaceName);
         lat = coords.lat;
@@ -635,13 +589,13 @@ addCommunityGroupsToSelect()
           const postcode = data.result[0].postcode;
           // Do something with the postcode
           // Update the selected postcode and latlng
-          // selectedPostcode = postcode;
-          // selectedLatLng = [lat, lng];
+          selectedPostcode = postcode;
+          selectedLatLng = [lat, lng];
           // Update the postcode input field
-          input.value = postcode;
-          // trigger the change event on the postcode input
-          const event = new Event('change');
-          input.dispatchEvent(event);
+          hiddenInput.value = postcode;
+          // // trigger the change event on the postcode input
+          // const event = new Event('change');
+          // input.dispatchEvent(event);
 
 
           // Update the widget code
@@ -714,17 +668,18 @@ function enableEnterKey(input) {
 const clearIcon = document.createElement('i');
 clearIcon.classList.add('fas', 'fa-square-xmark', 'absolute', 'right-[10px]', 'top-[10px]', 'hidden', 'text-darkblue', 'cursor-pointer', 'text-[1.8rem]', 'text-bold');
 clearIcon.addEventListener('click', () => {
-  postCodeInput.value = '';
-  postCodeInput.focus();
+  locationInput.value = '';
+  postCodeInputHidden.value = '';
+  locationInput.focus();
   clearIcon.classList.add('hidden');
   clearIcon.classList.remove('block');
   // trigger the change event on the postcode input
-  const event = new Event('change');
-  postCodeInput.dispatchEvent(event);
+  // const event = new Event('change');
+  // locationInput.dispatchEvent(event);
 });
-postCodeInput.insertAdjacentElement('afterend', clearIcon);
-postCodeInput.addEventListener('input', () => {
-  if (postCodeInput.value.length > 0) {
+locationInput.insertAdjacentElement('afterend', clearIcon);
+locationInput.addEventListener('input', () => {
+  if (locationInput.value.length > 0) {
     clearIcon.classList.remove('hidden');
     clearIcon.classList.add('block');
   } else {
