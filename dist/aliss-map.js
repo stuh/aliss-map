@@ -198,6 +198,7 @@ services.forEach(service => {
     const currentZoom = map.getZoom();
     map.setMinZoom(currentZoom);
     
+    
     // Enable zoom in only
     map.scrollWheelZoom.enable();
     map.touchZoom.enable();
@@ -313,7 +314,7 @@ const buildServiceCard = (service, locationOverride) => {
 
 const buildResultsList = (services) => {
 
-results_list.innerHTML = `<!--<p>${services.length} services found</p>--><h3 style="margin-top:20px;"><strong>Services nearest to you or available in your region</strong></h3>`;
+results_list.innerHTML = `<h3 style="margin-top:20px;"><strong>Services nearest to you or available in your region (${services.length})</strong></h3>`;
 
 services.forEach( service => {
   

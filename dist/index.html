@@ -24,14 +24,14 @@
         <label for="aliss-postcode" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
         <p class="pb-3" id="aliss-postcode-hint">Enter the postcode or region you want to center the map on.</p>
         <div class="relative">
-          <input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="G1 1AB" class="w-full border border-grey p-2 bg-lightgrey">
+          <input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="w-full border border-grey p-2 bg-lightgrey">
         </div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
         <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
-        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="5" aria-describedby="aliss-location-hint">
+        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="100" aria-describedby="aliss-location-hint">
         <div class="relative">
-          <input type="text" id="distance" name="distance" value="5" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
+          <input type="text" id="distance" name="distance" value="100" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
           <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
         </div>
 
@@ -58,7 +58,13 @@
       </div>
      
       <div class="mt-8">
-        <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 3: Code</label>
+        <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 3: Preview Your Map</label>
+        <button class="preview-map text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Preview Your Map</button>
+        <span id="copyMessage" class="hidden ">Copied Successfully!</span>
+      </div>
+
+      <div class="mt-8">
+        <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 4: Code</label>
         <p class="pb-3" id="aliss-widget-output-hint">Copy the code below to be added to your site.</p>
         <textarea id="widget-output" aria-describedby="aliss-widget-output-hint" rows="12" class="w-full border border-grey bg-lightgrey" readonly="readonly"></textarea>
         <button id="copy-code" class="text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Copy the code</button>
@@ -73,21 +79,24 @@
 
     <div class="lg:w-7/12 lg:pl-24 mt-8 " >
       <h2 class="heading1">Preview your Map</h2>
-      <div class="lg:border-2 border-[#D9D9D9] mt-6 py-[35px] lg:px-[50px]">
-        <div id="alissmap"></div>
+      <div id="preview-container" class="lg:border-2 border-[#D9D9D9] mt-6 py-[35px] lg:px-[50px]">
+        <div class="flex justify-center items-center w-full py-8">
+        <button class="preview-map text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Preview Your Map</button>
+        </div>
+          
 
-        <script src="/dist/aliss-map.js" type="text/javascript" defer></script>
-        <script type="text/javascript">
-          alissMapConfig = {
-            target: '#alissmap',
-              defaultPostCode: 'G11AB',
-              defaultLatLng: [55.86521, -4.26990],
-              defaultSearchRadius: 5000,
-              categories: [],
-              communityGroups: []
-          }
-          </script>
-      </div>
+          <script src="/dist/aliss-map.js" type="text/javascript" defer></script>
+          <script type="text/javascript">
+            alissMapConfig = {
+              target: '#alissmap',
+                defaultPostCode: '',
+                defaultLatLng: [55.86521, -4.26990],
+                defaultSearchRadius: 100000,
+                categories: [],
+                communityGroups: []
+            }
+            </script>
+        </div>
     </div>
   </div>
   
@@ -106,10 +115,9 @@ const ALISS_API_URL = 'https://www.aliss.org/api/v5';
 
 let selectedAlissServices = [];
 let selectedCommunityGroups = [];
-let selectedPostcode = 'G11AB';
+let selectedPostcode = '';
 let selectedLatLng = [55.86521, -4.26990];
-let selectedZoomLevel = 10;
-let selectedSearchRadius = 5000;
+let selectedSearchRadius = 100000;
 
 const getAlissServices = async () => {
   const resp = await fetch(`${ALISS_API_URL}/categories/`);
@@ -136,7 +144,7 @@ const addServicesToSelect = async () => {
         } else {
           selectedAlissServices = selectedAlissServices.filter((item) => item !== category);
         }
-        outputWidgetCode();
+        // outputWidgetCode();
       });
     });
     
@@ -169,7 +177,7 @@ const addCommunityGroupsToSelect = async () => {
         } else {
           selectedCommunityGroups = selectedCommunityGroups.filter((item) => item !== category);
         }
-        outputWidgetCode();
+        // outputWidgetCode();
       });
     });
     
@@ -358,7 +366,7 @@ function updateDistance(value) {
     slider.value = value;
     distanceInput.value = value;
 
-    outputWidgetCode();
+    // outputWidgetCode();
 
 }
 
@@ -422,18 +430,21 @@ postCodeInput.addEventListener('change', async (e) => {
   document.querySelector('.po_error').classList.add('hidden');
 
   // run the output to the widget box for copy and pasting
-  outputWidgetCode();
+  // outputWidgetCode();
+
+});
+
+// when preview button is clicked output the widget code
+document.querySelectorAll('.preview-map').forEach(button => {
+  button.addEventListener('click', () => {
+    outputWidgetCode();
+  });
 });
 
 const outputWidgetCode = () => {
 
-
-
-
-
   let alissConfig = {
     target: '#alissmap',
-    defaultZoom: selectedZoomLevel,
     defaultPostCode: selectedPostcode,
     defaultLatLng: selectedLatLng,
     defaultSearchRadius: selectedSearchRadius,
@@ -448,7 +459,6 @@ const outputWidgetCode = () => {
   <script>\
   alissMapConfig = {
     target: '#alissmap',
-    defaultZoom: ${selectedZoomLevel},
     defaultPostCode: '${selectedPostcode}',
     defaultLatLng: [${selectedLatLng}],
     defaultSearchRadius: ${selectedSearchRadius},
@@ -464,6 +474,18 @@ const outputWidgetCode = () => {
   // update the map with the new config
   alissMapConfig = {
     ...alissConfig
+  }
+
+  // Check if #alissmap exists, if not create it
+  if (!document.querySelector('#alissmap')) {
+    const alissMapDiv = document.createElement('div');
+    alissMapDiv.id = 'alissmap';
+    // Hide preview button if it exists
+    const previewButton = document.querySelector('#preview-container .preview-map');
+    if (previewButton) {
+      previewButton.parentElement.classList.add('hidden');
+    }
+    document.querySelector('#preview-container').prepend(alissMapDiv);
   }
   // clear existing map
   document.querySelector('#alissmap').innerHTML = '';
@@ -615,7 +637,7 @@ addCommunityGroupsToSelect()
 
 
           // Update the widget code
-          outputWidgetCode();
+          // outputWidgetCode();
 
         } else {
           console.log("No postcode found for these coordinates");
