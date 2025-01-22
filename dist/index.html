@@ -356,7 +356,7 @@ const distanceInput = document.getElementById('distance');
 // Function to update the value of alissDistance and keep elements in sync
 function updateDistance(value) {
     // Ensure the value is between 1 and 100
-    value = Math.min(Math.max(value, 1), 100);
+    value = Math.min(Math.max(value, 1), 250);
 
     // Update alissDistance
     selectedSearchRadius = value*1000;
@@ -409,7 +409,8 @@ postCodeInput.addEventListener('change', async (e) => {
 
   // if not a good postcode then show the error message and update its content to "Invalid postcode"
   // also set the aria-invalid to true
-  if (!postCodeOk) {
+  // except if its Scotland, UK as this needs to remain
+  if (!postCodeOk && selectedPostcode !== 'Scotland, UK') {
     if (selectedPostcode.length === 0) {
       return;
     }
@@ -571,6 +572,14 @@ addCommunityGroupsToSelect()
     // get the lat and lng from the place but first check for any exceptions in rare cases we cannot get a postcode from the API
     const addressLower = place.formatted_address.toLowerCase();
     let alternatePlaceName;
+
+    // Scotland, UK is a special case so we can set the latlng and postcode to empty
+    if (addressLower == "scotland, uk") {
+      selectedLatLng = [56.4907, -4.2026];
+      selectedPostcode = '';
+      updateDistance(250);
+      return;
+    }
 
     switch (true) {
       case addressLower.includes('shetland'):

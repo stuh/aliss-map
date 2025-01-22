@@ -78,7 +78,7 @@ const getSelectedCategory = () => {
 
 // get the postcode
 const getPostCode = () => {
-  return postcode_field.value || alissDefaults.defaultPostCode ;
+  return (postcode_field.value && postcode_field.value !== 'Scotland, UK') ? postcode_field.value : alissDefaults.defaultPostCode;
 }
 
 // get the query
@@ -204,7 +204,7 @@ services.forEach(service => {
     console.log('fitting bounds', validLatLngs.length)
     // Set minimum zoom to current zoom level after fitting bounds
     const currentZoom = map.getZoom();
-    map.setMinZoom(currentZoom-1);
+    map.setMinZoom(currentZoom - 1);
     
     
     // Enable zoom in only
@@ -342,7 +342,7 @@ const postcode = getPostCode()
 // if it's the default, we know this so don't use the API, just return our default latlng
 if (postcode == alissDefaults.defaultPostCode) {
   // now center the map
-  map.setView(alissDefaults.defaultLatLng, 12);
+  // map.setView(alissDefaults.defaultLatLng, 12);
   return
 }
 
@@ -350,7 +350,7 @@ if (postcode == alissDefaults.defaultPostCode) {
 const apilatlng = await getLatLngFromPostCode(postcode);
 
 // now center the map
-map.setView(apilatlng, 12);
+// map.setView(apilatlng, 12);
 }
 
 const getLatLngFromPostCode = async (postcode) => {
