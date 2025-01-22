@@ -94,7 +94,12 @@ const getServices = async (baseurl) => {
   const pclatlng = await getLatLngFromPostCode(postCode)
   const q = getQuery();
   const category = getSelectedCategory();
-  const radius = alissDefaults.defaultSearchRadius;
+  // if there is no postcode then don't limit by radius as the aliss search uses a default centerpoint, we want everything.
+  let radius = null;
+  if (postCode) {
+    radius = alissDefaults.defaultSearchRadius;
+  }
+  
   // get the communityGroups from the config, if any exist then we need to replace the commas with semi colons
   const communityGroups = Array.isArray(alissDefaults.communityGroups)
   ? alissDefaults.communityGroups.join(';')

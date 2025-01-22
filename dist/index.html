@@ -30,9 +30,9 @@
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
         <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
-        <input class="block mb-4" type="range" id="slider" min="1" max="450" value="450" aria-describedby="aliss-location-hint">
+        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="10" aria-describedby="aliss-location-hint">
         <div class="relative">
-          <input type="text" id="distance" name="distance" value="450" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
+          <input type="text" id="distance" name="distance" value="10" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
           <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
         </div>
 
@@ -90,8 +90,8 @@
             alissMapConfig = {
               target: '#alissmap',
                 defaultPostCode: '',
-                defaultLatLng: [55.86521, -4.26990],
-                defaultSearchRadius: 250000,
+                defaultLatLng: [56.4907, -4.2026],
+                defaultSearchRadius: 10000,
                 categories: [],
                 communityGroups: []
             }
@@ -116,8 +116,8 @@ const ALISS_API_URL = 'https://www.aliss.org/api/v5';
 let selectedAlissServices = [];
 let selectedCommunityGroups = [];
 let selectedPostcode = '';
-let selectedLatLng = [55.86521, -4.26990];
-let selectedSearchRadius = 1000000;
+let selectedLatLng = [56.4907, -4.2026];
+let selectedSearchRadius = 10000;
 
 
 // location input references
@@ -396,6 +396,10 @@ document.querySelectorAll('.preview-map').forEach(button => {
 
 const outputWidgetCode = () => {
 
+  if (!selectedPostcode) {
+    updateDistance(450);
+  }
+
   let alissConfig = {
     target: '#alissmap',
     defaultPostCode: selectedPostcode,
@@ -531,7 +535,7 @@ addCommunityGroupsToSelect()
     if (addressLower == "scotland, uk") {
       selectedLatLng = [56.4907, -4.2026];
       selectedPostcode = '';
-      updateDistance(250);
+      updateDistance(450);
       return;
     }
 
