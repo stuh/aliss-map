@@ -436,13 +436,25 @@ const addCSSFile = (url) => {
 // add js to the page
 // Function to load an external JS file
 const loadLeafletJS = (callback) => {
-  var script = document.createElement('script');
-  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-  script.crossOrigin = "";
-  if (callback) {
-    script.onload = callback;
-  }
-  document.head.appendChild(script);
+  // Load main Leaflet library
+  var leafletScript = document.createElement('script');
+  leafletScript.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  leafletScript.crossOrigin = "";
+  
+  // Load marker cluster after main library
+  leafletScript.onload = () => {
+    var clusterScript = document.createElement('script');
+    clusterScript.src = "https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js";
+    clusterScript.crossOrigin = "";
+    
+    if (callback) {
+      clusterScript.onload = callback;
+    }
+    
+    document.head.appendChild(clusterScript);
+  };
+
+  document.head.appendChild(leafletScript);
 }
 
 const createLoaderSVG = () => {
@@ -756,6 +768,8 @@ document.head.appendChild(style);
 // lets begin
 // add the leaflet css
 addCSSFile('https://unpkg.com/leaflet@1.9.2/dist/leaflet.css');
+addCSSFile('https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css');
+addCSSFile('https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css');
 
 // load the leaflet js and callback the createBaseMap function to build the default map
 
@@ -779,7 +793,8 @@ const initALISSMap = () => {
     attribution: `&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> | &copy <a href="https://www.ons.gov.uk/methodology/geography/licences">Crown copyright and database right ${new Date().getFullYear()}</a> `
   }).addTo(map);
   // create a map layer to hold the markers
-  markersLayer = L.layerGroup();
+  markersLayer = L.markerClusterGroup();
+  // markersLayer = L.layerGroup();
   // add it to the map
   map.addLayer(markersLayer);
 
