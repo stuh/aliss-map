@@ -30,7 +30,7 @@
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
         <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
-        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="10" aria-describedby="aliss-location-hint">
+        <input class="block mb-4" type="range" id="slider" min="1" max="500" value="10" aria-describedby="aliss-location-hint">
         <div class="relative">
           <input type="text" id="distance" name="distance" value="10" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
           <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
@@ -362,7 +362,7 @@ const distanceInput = document.getElementById('distance');
 // Function to update the value of alissDistance and keep elements in sync
 function updateDistance(value) {
     // Ensure the value is between 1 and 100
-    value = Math.min(Math.max(value, 1), 450);
+    value = Math.min(Math.max(value, 1), 500);
 
     // Update alissDistance
     selectedSearchRadius = value*1000;
@@ -397,7 +397,7 @@ document.querySelectorAll('.preview-map').forEach(button => {
 const outputWidgetCode = () => {
 
   if (!selectedPostcode) {
-    updateDistance(450);
+    updateDistance(500);
   }
 
   let alissConfig = {
@@ -535,7 +535,7 @@ addCommunityGroupsToSelect()
     if (addressLower == "scotland, uk") {
       selectedLatLng = [56.4907, -4.2026];
       selectedPostcode = '';
-      updateDistance(450);
+      updateDistance(500);
       return;
     }
 
