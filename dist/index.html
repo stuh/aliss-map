@@ -21,17 +21,18 @@
       <div class="flex flex-col mt-8 ">
         <h1 class="pb-7">Create your ALISS map</h1>
         <p class="text-[18px] pb-7">Follow the steps below to create your customised ALISS map.</p>
-        <label for="aliss-postcode" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
-        <p class="pb-3" id="aliss-postcode-hint">Enter the postcode or region you want to center the map on.</p>
+        <label for="aliss-location-search" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
+        <p class="pb-3" id="aliss-location-search-hint">Enter the postcode or region you want to center the map on.</p>
         <div class="relative">
-          <input type="text" id="aliss-postcode" aria-describedby="aliss-postcode-hint" name="aliss-postcode" value="" class="w-full border border-grey p-2 bg-lightgrey">
+          <input type="text" id="aliss-location-search" aria-describedby="aliss-location-search-hint" name="aliss-location-search" value="" class="w-full border border-grey p-2 bg-lightgrey">
+          <input type="hidden" id="aliss-postcode"  name="aliss-postcode" value="" >
         </div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
-        <p class="block py-4" id="aliss-location-hint">How far in km from the location would you like to show services? </p>
-        <input class="block mb-4" type="range" id="slider" min="1" max="100" value="5" aria-describedby="aliss-location-hint">
+        <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
+        <input class="block mb-4" type="range" id="slider" min="1" max="500" value="10" aria-describedby="aliss-location-hint">
         <div class="relative">
-          <input type="text" id="distance" name="distance" value="5" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
+          <input type="text" id="distance" name="distance" value="10" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
           <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
         </div>
 
@@ -39,14 +40,32 @@
       </div>
       <div class="flex flex-col mt-8">
         <label for="aliss-services" class="text-darkblue font-black heading1 pb-3">Step 2: Category Selection</label>
-        <p class="pb-3" >Select the service categories you want to include on your map.</p>
+        <p class="pb-3" >Select the types of services you want to include on your map.</p>
         
         <div id="aliss-services" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto">
         </div>
       </div>
+     
+      <div class="flex flex-col mt-8 ">
+        <button class=" text-darkblue text-[16px] text-left mb-3 cursor-pointer" 
+                    aria-controls="aliss-communitygroups"
+                    aria-label="Expand community group categories"
+                    aria-expanded="false"
+                    data-target="#aliss-communitygroups"
+                ><label for="aliss-communitygroups" class="text-almostblack font-black heading2 pb-3 cursor-pointer">Select who categories (optional) <i class="text-darkblue fas fa-angle-down"></i> </button></label>
+        
+        <div id="aliss-communitygroups" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto hidden">
+        </div>
+      </div>
+     
       <div class="mt-8">
-        <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 3: Code</label>
-        <p class="pb-3" id="aliss-widget-output-hint">Copy the code to be added to your site.</p>
+        <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 3: Preview Your Map</label>
+        <button class="preview-map text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Update Map and Code</button>
+      </div>
+
+      <div class="mt-8">
+        <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 4: Code</label>
+        <p class="pb-3" id="aliss-widget-output-hint">Copy the code below to be added to your site.</p>
         <textarea id="widget-output" aria-describedby="aliss-widget-output-hint" rows="12" class="w-full border border-grey bg-lightgrey" readonly="readonly"></textarea>
         <button id="copy-code" class="text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Copy the code</button>
         <span id="copyMessage" class="hidden ">Copied Successfully!</span>
@@ -59,21 +78,25 @@
     </div>
 
     <div class="lg:w-7/12 lg:pl-24 mt-8 " >
-      <h2 class="heading1">Preview your Map</h2>
-      <div class="lg:border-2 border-[#D9D9D9] mt-6 py-[35px] lg:px-[50px]">
-        <div id="alissmap"></div>
+      <h2 class="heading1">Preview Your Map</h2>
+      <div id="preview-container" class="lg:border-2 border-[#D9D9D9] mt-6 py-[35px] lg:px-[50px]">
+        <div class="flex justify-center items-center w-full py-8">
+        <button class="preview-map text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Preview Map</button>
+        </div>
+          
 
-        <script src="/dist/aliss-map.js" type="text/javascript" defer></script>
-        <script type="text/javascript">
-          alissMapConfig = {
-            target: '#alissmap',
-              defaultPostCode: 'G11AB',
-              defaultLatLng: [55.86521, -4.26990],
-              defaultSearchRadius: 5000,
-              categories: []
-          }
-          </script>
-      </div>
+          <script src="/dist/aliss-map.js?v=0.35" type="text/javascript" defer></script>
+          <script type="text/javascript">
+            alissMapConfig = {
+              target: '#alissmap',
+                defaultPostCode: '',
+                defaultLatLng: [56.4907, -4.2026],
+                defaultSearchRadius: 10000,
+                categories: [],
+                communityGroups: []
+            }
+            </script>
+        </div>
     </div>
   </div>
   
@@ -87,32 +110,38 @@
 // add an event listener to the select element that listens for a change event
 // when the event is triggered, get the value of the selected option
 // log the value to the console
+// ALISS API URL
+const ALISS_API_URL = 'https://www.aliss.org/api/v5';
 
 let selectedAlissServices = [];
-let selectedPostcode = 'G11AB';
-let selectedLatLng = [55.86521, -4.26990];
-let selectedZoomLevel = 10;
-let selectedSearchRadius = 5000;
+let selectedCommunityGroups = [];
+let selectedPostcode = '';
+let selectedLatLng = [56.4907, -4.2026];
+let selectedSearchRadius = 10000;
+
+
+// location input references
+const locationInput = document.querySelector('#aliss-location-search');
+const postCodeInputHidden = document.querySelector('#aliss-postcode');
 
 const getAlissServices = async () => {
-  const resp = await fetch('https://www.aliss.org/api/v4/categories/');
+  const resp = await fetch(`${ALISS_API_URL}/categories/`);
   const data = await resp.json();
   return data.data;
 };
 
 const addServicesToSelect = async () => {
-  const select = document.querySelector('select#aliss-services');
   try {
     const data = await getAlissServices();
 
-    // Example usage:
-    const checkboxListHtml = createCheckboxListFromJSON(data);
-
+    // Generate the HTML for the checkbox list
+    const checkboxListHtml = createCheckboxListFromJSON(data, 1, 'services-div', 'sub_categories');
+  
     // Insert the generated HTML into the DOM (for example, inside a div with id "category-list")
     document.getElementById('aliss-services').innerHTML = checkboxListHtml;
     
     // add a listener to the checkboxes, when they are clicked, update the selectedAlissServices array
-    document.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+    document.querySelectorAll('#services-div input[type="checkbox"]').forEach((checkbox) => {
       checkbox.addEventListener('change', (e) => {
         const category = e.target.value;
         if (e.target.checked) {
@@ -120,7 +149,7 @@ const addServicesToSelect = async () => {
         } else {
           selectedAlissServices = selectedAlissServices.filter((item) => item !== category);
         }
-        outputWidgetCode();
+        // outputWidgetCode();
       });
     });
     
@@ -129,19 +158,50 @@ const addServicesToSelect = async () => {
   }
 };
 
-const createCheckboxListFromJSON = (data, level = 1, targetdiv) => {
-    // Base case: if the data is empty, return an empty string
+const getAlissCommunityGroups = async () => {
+  const resp = await fetch(`${ALISS_API_URL}/community-groups/`);
+  const data = await resp.json();
+  return data.data;
+};
+
+const addCommunityGroupsToSelect = async () => {
+  try {
+    const data = await getAlissCommunityGroups();
+
+    // Generate the HTML for the checkbox list
+    const checkboxListHtml = createCheckboxListFromJSON(data, 1, 'community-groups-div', 'sub_communitygroups');
+    // Insert the generated HTML into the DOM (for example, inside a div with id "category-list")
+    document.getElementById('aliss-communitygroups').innerHTML = checkboxListHtml;
+    
+    // add a listener to the checkboxes, when they are clicked, update the selectedCommunityGroups array
+    document.querySelectorAll('#community-groups-div input[type="checkbox"]').forEach((checkbox) => {
+      checkbox.addEventListener('change', (e) => {
+        const category = e.target.value;
+        if (e.target.checked) {
+          selectedCommunityGroups.push(category);
+        } else {
+          selectedCommunityGroups = selectedCommunityGroups.filter((item) => item !== category);
+        }
+        // outputWidgetCode();
+      });
+    });
+    
+  } catch (err) {
+    console.error(`Oops, something is wrong ${err}`);
+  }
+};
+
+const createCheckboxListFromJSON = (data, level = 1, targetdiv, subCategoryProp = 'sub_categories') => {
     if (!data || data.length === 0) {
         return '';
     }
-    // Start an unordered list
+
     let html = `<ul class="ml-8 pt-2 ${level == 1 ? '' : 'hidden'}" id="${targetdiv}" role="group" aria-level="${level}">`;
-    // Iterate over each item in the data
+    
     data.forEach(item => {
-        // Create a list item for the current category with a checkbox
-        const hasSubCategories = item.sub_categories && item.sub_categories.length > 0;
-        const toggleId = `toggle-${item.slug}`; // Unique ID for each toggle button
-        const ariaExpanded = hasSubCategories ? 'false' : ''; // ARIA attribute for expandable items
+        const hasSubCategories = item[subCategoryProp] && item[subCategoryProp].length > 0;
+        const toggleId = `toggle-${item.slug}`;
+        const ariaExpanded = hasSubCategories ? 'false' : '';
 
         html += `
             <li role="treeitem" aria-expanded="${ariaExpanded}" id="treeitem-${item.slug}" aria-labelledby="label-${item.slug}">
@@ -149,7 +209,7 @@ const createCheckboxListFromJSON = (data, level = 1, targetdiv) => {
                 <label id="label-${item.slug}" class="flex items-center gap-2 py-1">
                     <input type="checkbox" id="category-${item.slug}" name="categories" value="${item.slug}" class="w-6 h-6 border-almostblack" aria-labelledby="label-${item.slug}">
         `;
-        // If the category has a non-null icon value, then add the icon to the label
+
         if (item.icon) {
             html += `<i class="text-almostblack text-[16px] ${item.icon}"></i>`;
         }
@@ -166,14 +226,14 @@ const createCheckboxListFromJSON = (data, level = 1, targetdiv) => {
                 ></button>`;
         }
         html += `</div>`;
-        // Recursively generate the subcategories, if they exist
+
         if (hasSubCategories) {
-            html += createCheckboxListFromJSON(item.sub_categories, level + 1, toggleId);
+            html += createCheckboxListFromJSON(item[subCategoryProp], level + 1, toggleId, subCategoryProp);
         }
-        // Close the list item
+
         html += '</li>';
     });
-    // Close the unordered list
+
     html += '</ul>';
     return html;
 };
@@ -276,6 +336,24 @@ function moveFocus(currentCheckbox, direction) {
   }
 }
 
+function toggleCommunityGroups() {
+  const button = document.querySelector('button[aria-controls="aliss-communitygroups"]');
+  const target = document.getElementById('aliss-communitygroups');
+  
+  button.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+    button.setAttribute('aria-expanded', !isExpanded);
+    
+    // Toggle fa-angle-down/fa-angle-up classes
+    button.classList.toggle('fa-angle-down');
+    button.classList.toggle('fa-angle-up');
+    
+    // Toggle hidden class on target
+    target.classList.toggle('hidden');
+  });
+}
+document.addEventListener('DOMContentLoaded', toggleCommunityGroups);
 
 // Getting references to the HTML elements
 const slider = document.getElementById('slider');
@@ -284,7 +362,7 @@ const distanceInput = document.getElementById('distance');
 // Function to update the value of alissDistance and keep elements in sync
 function updateDistance(value) {
     // Ensure the value is between 1 and 100
-    value = Math.min(Math.max(value, 1), 100);
+    value = Math.min(Math.max(value, 1), 500);
 
     // Update alissDistance
     selectedSearchRadius = value*1000;
@@ -293,25 +371,13 @@ function updateDistance(value) {
     slider.value = value;
     distanceInput.value = value;
 
-    outputWidgetCode();
+    // outputWidgetCode();
 
 }
 
-// Debounce function to limit the rate of execution
-function debounce(func, delay) {
-    let timeout;
-    return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), delay);
-    };
-}
-
-// Debounced version of the updateDistance function
-const debouncedUpdateDistance = debounce(updateDistance, 300); // 300ms delay
-
-// Event listener for slider input with debouncing
+// Event listener for slider input debouncing
 slider.addEventListener('input', function () {
-    debouncedUpdateDistance(this.value);
+    updateDistance(this.value);
 });
 
 // Event listener for text input change
@@ -320,59 +386,29 @@ distanceInput.addEventListener('input', function() {
 });
 
 
-const postCodeInput = document.querySelector('#aliss-postcode');
-postCodeInput.addEventListener('change', async (e) => {
-  selectedPostcode = e.target.value;
 
-  // reset any aria warnings and errors
-  postCodeInput.setAttribute('aria-invalid', 'false');
-  document.querySelector('.po_error').classList.remove('block');
-  document.querySelector('.po_error').classList.add('hidden');
-
-  // the postcoe regex
-  rePostCode = /^(([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2}))$/;
-
-  // do the test
-  const postCodeOk = rePostCode.test(selectedPostcode);
-
-  // if not a good postcode then show the error message and update its content to "Invalid postcode"
-  // also set the aria-invalid to true
-  if (!postCodeOk) {
-    if (selectedPostcode.length === 0) {
-      return;
-    }
-    document.querySelector('.po_error').classList.remove('hidden');
-    document.querySelector('.po_error').classList.add('block');
-    document.querySelector('.po_error').textContent = 'Please enter a valid UK postcode or place name';
-    postCodeInput.setAttribute('aria-invalid', 'true');
-    return;
-  }
-  
-
-  // get selected latlng from the postcode
-  selectedLatLng = await getLatLngFromPostCode(selectedPostcode);
-
-  // reset any warnings
-  document.querySelector('.po_error').classList.remove('block');
-  document.querySelector('.po_error').classList.add('hidden');
-
-  // run the output to the widget box for copy and pasting
-  outputWidgetCode();
+// when preview button is clicked output the widget code
+document.querySelectorAll('.preview-map').forEach(button => {
+  button.addEventListener('click', () => {
+    // Remove focus
+    this.blur();
+    outputWidgetCode();
+  });
 });
 
 const outputWidgetCode = () => {
 
-
-
-
+  if (!selectedPostcode) {
+    updateDistance(500);
+  }
 
   let alissConfig = {
     target: '#alissmap',
-    defaultZoom: selectedZoomLevel,
     defaultPostCode: selectedPostcode,
     defaultLatLng: selectedLatLng,
     defaultSearchRadius: selectedSearchRadius,
-    categories: selectedAlissServices
+    categories: selectedAlissServices,
+    communityGroups: selectedCommunityGroups
   }
 
 
@@ -382,11 +418,11 @@ const outputWidgetCode = () => {
   <script>\
   alissMapConfig = {
     target: '#alissmap',
-    defaultZoom: ${selectedZoomLevel},
     defaultPostCode: '${selectedPostcode}',
     defaultLatLng: [${selectedLatLng}],
     defaultSearchRadius: ${selectedSearchRadius},
-    categories: ${JSON.stringify(selectedAlissServices)}
+    categories: ${JSON.stringify(selectedAlissServices)},
+    communityGroups: ${JSON.stringify(selectedCommunityGroups)}
   }<\/script>
   <!-- End Include the ALISS Map widget script -->
   `
@@ -397,6 +433,18 @@ const outputWidgetCode = () => {
   // update the map with the new config
   alissMapConfig = {
     ...alissConfig
+  }
+
+  // Check if #alissmap exists, if not create it
+  if (!document.querySelector('#alissmap')) {
+    const alissMapDiv = document.createElement('div');
+    alissMapDiv.id = 'alissmap';
+    // Hide preview button if it exists
+    const previewButton = document.querySelector('#preview-container .preview-map');
+    if (previewButton) {
+      previewButton.parentElement.classList.add('hidden');
+    }
+    document.querySelector('#preview-container').prepend(alissMapDiv);
   }
   // clear existing map
   document.querySelector('#alissmap').innerHTML = '';
@@ -437,13 +485,15 @@ const copyToClipboard = () => {
 document.querySelector('#copy-code').addEventListener('click', copyToClipboard);
 
 addServicesToSelect()
+addCommunityGroupsToSelect()
 
 // load the following when the google maps script has loaded
  function initMap() {
   // define center
   const center = { lat: 50.064192, lng: -130.605469 };
   // input field for the postcode
-  const input = document.getElementById("aliss-postcode");
+  const input = document.getElementById("aliss-location-search");
+  const hiddenInput = document.getElementById("aliss-postcode");
   // set options for the autocomplete
   const options = {
     componentRestrictions: { country: "gb" }
@@ -483,6 +533,14 @@ addServicesToSelect()
     const addressLower = place.formatted_address.toLowerCase();
     let alternatePlaceName;
 
+    // Scotland, UK is a special case so we can set the latlng and postcode to empty
+    if (addressLower == "scotland, uk") {
+      selectedLatLng = [56.4907, -4.2026];
+      selectedPostcode = '';
+      updateDistance(500);
+      return;
+    }
+
     switch (true) {
       case addressLower.includes('shetland'):
         alternatePlaceName = islandMappings.shetland;
@@ -517,7 +575,7 @@ addServicesToSelect()
     // If an alternate place name was found, use it to get the coordinates
     if (alternatePlaceName) {
       console.log(`Using alternate place name: ${alternatePlaceName}`);
-      input.value = alternatePlaceName;
+      hiddenInput.value = alternatePlaceName;
       try {
         const coords = await getAlternatePlaceNameCoordinates(alternatePlaceName);
         lat = coords.lat;
@@ -537,17 +595,17 @@ addServicesToSelect()
           const postcode = data.result[0].postcode;
           // Do something with the postcode
           // Update the selected postcode and latlng
-          // selectedPostcode = postcode;
-          // selectedLatLng = [lat, lng];
+          selectedPostcode = postcode;
+          selectedLatLng = [lat, lng];
           // Update the postcode input field
-          input.value = postcode;
-          // trigger the change event on the postcode input
-          const event = new Event('change');
-          input.dispatchEvent(event);
+          hiddenInput.value = postcode;
+          // // trigger the change event on the postcode input
+          // const event = new Event('change');
+          // input.dispatchEvent(event);
 
 
           // Update the widget code
-          outputWidgetCode();
+          // outputWidgetCode();
 
         } else {
           console.log("No postcode found for these coordinates");
@@ -616,17 +674,18 @@ function enableEnterKey(input) {
 const clearIcon = document.createElement('i');
 clearIcon.classList.add('fas', 'fa-square-xmark', 'absolute', 'right-[10px]', 'top-[10px]', 'hidden', 'text-darkblue', 'cursor-pointer', 'text-[1.8rem]', 'text-bold');
 clearIcon.addEventListener('click', () => {
-  postCodeInput.value = '';
-  postCodeInput.focus();
+  locationInput.value = '';
+  postCodeInputHidden.value = '';
+  locationInput.focus();
   clearIcon.classList.add('hidden');
   clearIcon.classList.remove('block');
   // trigger the change event on the postcode input
-  const event = new Event('change');
-  postCodeInput.dispatchEvent(event);
+  // const event = new Event('change');
+  // locationInput.dispatchEvent(event);
 });
-postCodeInput.insertAdjacentElement('afterend', clearIcon);
-postCodeInput.addEventListener('input', () => {
-  if (postCodeInput.value.length > 0) {
+locationInput.insertAdjacentElement('afterend', clearIcon);
+locationInput.addEventListener('input', () => {
+  if (locationInput.value.length > 0) {
     clearIcon.classList.remove('hidden');
     clearIcon.classList.add('block');
   } else {

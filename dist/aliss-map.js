@@ -69,15 +69,16 @@ document.addEventListener('click', function(e){
   }
 });
 
-// get the chosen category, default to food-and-nutrition
+// get the chosen category, default to all
 const getSelectedCategory = () => {
+  // get the selected category or get all if none selected
   const category = document.querySelector('input[name="category"]:checked')?.value || '';
   return category;
 }
 
 // get the postcode
 const getPostCode = () => {
-  return postcode_field.value || alissDefaults.defaultPostCode ;
+  return (postcode_field.value && postcode_field.value !== 'Scotland, UK') ? postcode_field.value : alissDefaults.defaultPostCode;
 }
 
 // get the query
@@ -93,7 +94,17 @@ const getServices = async (baseurl) => {
   const pclatlng = await getLatLngFromPostCode(postCode)
   const q = getQuery();
   const category = getSelectedCategory();
-  const radius = alissDefaults.defaultSearchRadius;
+  // if there is no postcode then don't limit by radius as the aliss search uses a default centerpoint, we want everything.
+  let radius = null;
+  if (postCode) {
+    radius = alissDefaults.defaultSearchRadius;
+  }
+  
+  // get the communityGroups from the config, if any exist then we need to replace the commas with semi colons
+  const communityGroups = Array.isArray(alissDefaults.communityGroups)
+  ? alissDefaults.communityGroups.join(';')
+  : (alissDefaults.communityGroups || '').split(',').join(';');
+
   // category might have multiple comma seperated valueds so we need to split them into an array, eg. food-and-nutrition, money
   const categoryArray = getSelectedCategory().split(',');
   // we can then loop through the categories and add all the services for each one to a services Map, we're using a map with id as the key so we can avoid duplication of services in the list
@@ -101,7 +112,7 @@ const getServices = async (baseurl) => {
 
   for (const cat of categoryArray) {
     // set the baseUrl
-    const baseUrl = `${baseurl}?lat=${pclatlng[0]}&ln=${pclatlng[1]}&q=${q}&category=${cat}&postcode=${postCode}&page_size=1000&radius=${radius}&format=json&page=`;
+    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&page_size=1000&radius=${radius}&format=json&page=`;
     // const baseUrl = `/memberslist?q=${q}&category=${category}&postcode=${postCode}&page_size=1000&radius=${radius}&format=json&page=`;
 
     // set first page
@@ -147,7 +158,7 @@ const getServices = async (baseurl) => {
 
 
 //function to take the services array. We iterate each service to add a marker to the markersLayer LayerGroup
-const addMarkersToMap = (services) => {
+const addMarkersToMap = async (services) => {
 
 
 // if we already have a layer group, clear it of Markers.
@@ -155,6 +166,10 @@ if (map.hasLayer(markersLayer)) {
   markersLayer.clearLayers();
 }
 
+// create an array to hold the latlngs of the markers
+const postCode = getPostCode();
+const pclatlng = await getLatLngFromPostCode(postCode)
+const validLatLngs = []; // Array to store valid coordinates
 
 // for each service build the popup and then add to the layerGroup
 services.forEach(service => {
@@ -163,21 +178,51 @@ services.forEach(service => {
     service.locations.forEach(location => {
       // build the html servicecard but use the override feature for each location
       let serviceCard = buildServiceCard(service, location);
+      
+      let locationDistance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], location.latitude || 0, location.longitude || 0)
       // add the marker if it has a latlng
-      if (location.latitude && location.longitude) {
+      if (location.latitude && location.longitude && (locationDistance < alissDefaults.defaultSearchRadius/1000)) {
         markersArray[`${service.id}${location.latitude}${location.longitude}`] = L.marker([location.latitude, location.longitude]).bindPopup(serviceCard).bindTooltip(`<strong>${service.name}</strong><br/>${location.street_address}<br/>${location.locality}`).addTo(markersLayer);
+        // add latlng to the array to be used to set the bonds of the map
+        validLatLngs.push([location.latitude, location.longitude]);
       }
-      // add latlng to the array to be used to set the bonds of the map
-      // arrayOfLatLngs.push([location.latitude, location.longitude]);
 
     });
+  }
+  // Update the total count display
+  if (getPostCode()) {
+    document.getElementById('aliss-totals').textContent = `${services.length} services found. ${validLatLngs.length} locations shown within ${alissDefaults.defaultSearchRadius/1000}km of ${getPostCode()}`;
+    
+  } else {
+    document.getElementById('aliss-totals').textContent = `${services.length} services found`;
   }
 })
 
 // set the bounds of the map and add make the map fit the bounds 
-// TODO not using as some outliers have wacky latlng compared to the postcode search they are part of - the result is the map always zoooms way out.
-// var bounds = new L.LatLngBounds(arrayOfLatLngs);
-// map.fitBounds(bounds);
+// If we have valid coordinates, fit the map to show all markers
+  if (validLatLngs.length > 0) {
+    const bounds = L.latLngBounds(validLatLngs);
+    map.fitBounds(bounds, {
+      padding: [20, 20]
+    });
+
+
+    // Set minimum zoom to current zoom level after fitting bounds
+    setTimeout(() => {
+      const currentZoom = map.getZoom();
+      console.log('currentZoom', currentZoom);
+      map.setMinZoom(currentZoom);
+    }, 100);  
+    // Enable zoom in only
+    map.scrollWheelZoom.enable();
+    map.touchZoom.enable();
+
+    // Disable dragging
+    // map.dragging.disable();
+    
+    // Set max bounds to prevent panning outside marker area
+    map.setMaxBounds(bounds.pad(1));
+  }
 }
 
 // this builds the html for a service to be used in both the map popup and list, keeps it the same.
@@ -283,7 +328,7 @@ const buildServiceCard = (service, locationOverride) => {
 
 const buildResultsList = (services) => {
 
-results_list.innerHTML = `<p>${services.length} services found</p>`;
+results_list.innerHTML = `<h3 style="margin-top:20px;" id="aliss-totals"></h3>`;
 
 services.forEach( service => {
   
@@ -294,27 +339,12 @@ services.forEach( service => {
 
 }
 
-// center the map on the postcode (with caching of geolocation api results)
-const centerMapOnPostcode = async () => {
-
-// get the entered postcode value
-const postcode = getPostCode()
-
-// if it's the default, we know this so don't use the API, just return our default latlng
-if (postcode == alissDefaults.defaultPostCode) {
-  // now center the map
-  map.setView(alissDefaults.defaultLatLng, 12);
-  return
-}
-
-// if it's not the default or a previously fetched postcode, grab it from the API...
-const apilatlng = await getLatLngFromPostCode(postcode);
-
-// now center the map
-map.setView(apilatlng, 12);
-}
-
 const getLatLngFromPostCode = async (postcode) => {
+
+  // if the postcode is empty then return the default
+if (!postcode) {
+  return [56.4907, -4.2026];
+}
 
 // if this postcode is in the cache then just return that instead of using the api
 if (postCodeToLatLngHistory[postcode]) {
@@ -340,7 +370,6 @@ try {
       }
       
     } catch (err) {
-      console.error(`Oops, something is wrong ${err}`);
       return alissDefaults.defaultLatLng;
     }
 
@@ -355,7 +384,7 @@ async function doSearch() {
   loader.classList.remove('load-hide');
 
   // get all the services from the API into an arrayOfObjects
-  const servicesList = await getServices('https://api.aliss.org/v4/services/');
+  const servicesList = await getServices('https://api.aliss.org/v5/services/');
 
   // now sort them but distance into a new arrayOfObjects
   const sortedArray = servicesList.sort((a, b) => {  
@@ -363,13 +392,14 @@ async function doSearch() {
       ? 1
       : -1
   })
-
-  // add markers to the map
-  addMarkersToMap(sortedArray);
-  centerMapOnPostcode();
-
+  
   // show results list
   buildResultsList(sortedArray);
+
+  // add markers to the map await so we can calculate the total that meet the distance critieria and use it in the results list
+  await addMarkersToMap(sortedArray);
+
+
 
   // hide the loader
   loader.classList.add('load-hide');
@@ -406,11 +436,25 @@ const addCSSFile = (url) => {
 // add js to the page
 // Function to load an external JS file
 const loadLeafletJS = (callback) => {
-  var script = document.createElement('script');
-  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-  script.crossOrigin = "";
-  script.onload = callback;
-  document.head.appendChild(script);
+  // Load main Leaflet library
+  var leafletScript = document.createElement('script');
+  leafletScript.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  leafletScript.crossOrigin = "";
+  
+  // Load marker cluster after main library
+  leafletScript.onload = () => {
+    var clusterScript = document.createElement('script');
+    clusterScript.src = "https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js";
+    clusterScript.crossOrigin = "";
+    
+    if (callback) {
+      clusterScript.onload = callback;
+    }
+    
+    document.head.appendChild(clusterScript);
+  };
+
+  document.head.appendChild(leafletScript);
 }
 
 const createLoaderSVG = () => {
@@ -630,9 +674,12 @@ style.innerHTML = `
         display:none;
       }
       .aliss-map .service-description{
-        
         margin-top:15px;
         margin-bottom:15px;
+      }
+      .aliss-map .leaflet-popup-content-wrapper .service-description{
+        overflow-y: scroll;
+        height:60px;
       }
       
       .aliss-map .service-links a{
@@ -721,6 +768,8 @@ document.head.appendChild(style);
 // lets begin
 // add the leaflet css
 addCSSFile('https://unpkg.com/leaflet@1.9.2/dist/leaflet.css');
+addCSSFile('https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css');
+addCSSFile('https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css');
 
 // load the leaflet js and callback the createBaseMap function to build the default map
 
@@ -744,7 +793,8 @@ const initALISSMap = () => {
     attribution: `&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> | &copy <a href="https://www.ons.gov.uk/methodology/geography/licences">Crown copyright and database right ${new Date().getFullYear()}</a> `
   }).addTo(map);
   // create a map layer to hold the markers
-  markersLayer = L.layerGroup();
+  markersLayer = L.markerClusterGroup();
+  // markersLayer = L.layerGroup();
   // add it to the map
   map.addLayer(markersLayer);
 
@@ -765,7 +815,6 @@ const initALISSMap = () => {
     doPostCodeSearch();
   });
 
-
   // add click handler for the postcode box, includes the clear button 
   postcode_field.addEventListener('search', (event) => {
     doPostCodeSearch();
@@ -783,12 +832,15 @@ const initALISSMap = () => {
   doSearch();
 }
 
-// when ready build the widget
+// when ready build the widget  
 document.addEventListener('DOMContentLoaded', function() {
-  // get leaflet and run init
-  loadLeafletJS(initALISSMap);
-
-  
+  // Check if target exists before loading leaflet and initializing
+  if (alissMapConfig.target && document.querySelector(alissMapConfig.target)) {
+    loadLeafletJS(initALISSMap);
+  } else {
+    console.warn('ALISS Map target element not found');
+    loadLeafletJS();
+  }
 });
 
 
