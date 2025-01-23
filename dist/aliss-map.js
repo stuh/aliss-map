@@ -182,7 +182,6 @@ services.forEach(service => {
       let locationDistance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], location.latitude || 0, location.longitude || 0)
       // add the marker if it has a latlng
       if (location.latitude && location.longitude && (locationDistance < alissDefaults.defaultSearchRadius/1000)) {
-        console.log('added within distance')
         markersArray[`${service.id}${location.latitude}${location.longitude}`] = L.marker([location.latitude, location.longitude]).bindPopup(serviceCard).bindTooltip(`<strong>${service.name}</strong><br/>${location.street_address}<br/>${location.locality}`).addTo(markersLayer);
         // add latlng to the array to be used to set the bonds of the map
         validLatLngs.push([location.latitude, location.longitude]);
@@ -206,18 +205,20 @@ services.forEach(service => {
     map.fitBounds(bounds, {
       padding: [20, 20]
     });
-    console.log('fitting bounds', validLatLngs.length)
+
+
     // Set minimum zoom to current zoom level after fitting bounds
-    const currentZoom = map.getZoom();
-    map.setMinZoom(currentZoom - 1);
-    
-    
+    setTimeout(() => {
+      const currentZoom = map.getZoom();
+      console.log('currentZoom', currentZoom);
+      map.setMinZoom(currentZoom);
+    }, 100);  
     // Enable zoom in only
     map.scrollWheelZoom.enable();
     map.touchZoom.enable();
 
     // Disable dragging
-    map.dragging.disable();
+    // map.dragging.disable();
     
     // Set max bounds to prevent panning outside marker area
     map.setMaxBounds(bounds.pad(1));
