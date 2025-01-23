@@ -390,6 +390,8 @@ distanceInput.addEventListener('input', function() {
 // when preview button is clicked output the widget code
 document.querySelectorAll('.preview-map').forEach(button => {
   button.addEventListener('click', () => {
+    // Remove focus
+    this.blur();
     outputWidgetCode();
   });
 });
