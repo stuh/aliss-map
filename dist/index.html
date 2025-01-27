@@ -391,7 +391,9 @@ distanceInput.addEventListener('input', function() {
 document.querySelectorAll('.preview-map').forEach(button => {
   button.addEventListener('click', () => {
     // Remove focus
-    this.blur();
+    button.blur();
+    // focus the copy the code button
+    // document.querySelector('#copy-code').focus();
     outputWidgetCode();
   });
 });
