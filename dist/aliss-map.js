@@ -69,13 +69,6 @@ document.addEventListener('click', function(e){
   }
 });
 
-// get the chosen category, default to all
-const getSelectedCategory = () => {
-  // get the selected category or get all if none selected
-  const category = document.querySelector('input[name="category"]:checked')?.value || '';
-  return category;
-}
-
 // get the postcode
 const getPostCode = () => {
   return (postcode_field.value && postcode_field.value !== 'Scotland, UK') ? postcode_field.value : alissDefaults.defaultPostCode;
@@ -88,74 +81,78 @@ const getQuery = () => {
 
 // getServices function which grabs the services from ALISS and returns a services Array of Objects
 const getServices = async (baseurl) => {
-  // set some variables
-  // set the parameters
+  // Set common parameters
   const postCode = getPostCode();
-  const pclatlng = await getLatLngFromPostCode(postCode)
+  const pclatlng = await getLatLngFromPostCode(postCode);
   const q = getQuery();
-  const category = getSelectedCategory();
-  // if there is no postcode then don't limit by radius as the aliss search uses a default centerpoint, we want everything.
-  let radius = null;
-  if (postCode) {
-    radius = alissDefaults.defaultSearchRadius;
-  }
+  let radius = postCode ? alissDefaults.defaultSearchRadius : null;
   
-  // get the communityGroups from the config, if any exist then we need to replace the commas with semi colons
-  const communityGroups = Array.isArray(alissDefaults.communityGroups)
-  ? alissDefaults.communityGroups.join(';')
-  : (alissDefaults.communityGroups || '').split(',').join(';');
+  // Get selected filter data
+  const selectedFilter = document.querySelector('input[name="filter"]:checked')?.value || '';
+  const filterData = JSON.parse(selectedFilter);
+  
+  // Create a Map to store unique services
+  let servicesMap = new Map();
 
-  // category might have multiple comma seperated valueds so we need to split them into an array, eg. food-and-nutrition, money
-  const categoryArray = getSelectedCategory().split(',');
-  // we can then loop through the categories and add all the services for each one to a services Map, we're using a map with id as the key so we can avoid duplication of services in the list
-  let servicesMap = new Map(); // Use a Map to store unique services
+  // Function to fetch services for a specific filter
+  const fetchServicesForFilter = async (paramName, paramValue) => {
+    if (!paramValue) return;
 
-  for (const cat of categoryArray) {
-    // set the baseUrl
-    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&page_size=1000&radius=${radius}&format=json&page=`;
-    // const baseUrl = `/memberslist?q=${q}&category=${category}&postcode=${postCode}&page_size=1000&radius=${radius}&format=json&page=`;
-
-    // set first page
-    let page = 1;
-    // create empty array where we want to store the services objects for each loop
+    // set the baseUrl with only one filter type at a time
+    const baseUrl = `${baseurl}?q=${q}&${paramName}=${paramValue}&postcode=${postCode}&page_size=1000&radius=${radius}&format=json&page=`;
     
-    // create a lastResult array which is going to be used to check if there is a next page
+    let page = 1;
     let lastResult = [];
+
     do {
-      // try catch to catch any errors in the async api call
       try {
-        // use fetch to make api call
         const resp = await fetch(`${baseUrl}${page}`);
         const data = await resp.json();
         lastResult = data;
-        const count = data.count;
+        
         data.data.forEach(service => {
-          // destructure the services object and add to array
-          const { name, gcfn, description, locations, url, phone, email, organisation, permalink, id } = service;
-          // for each service calulcate its distance from the currently searched postcode, we'll sort by this later when building the card list below the map
-          const distance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], locations[0]?.latitude || 0, locations[0]?.longitude || 0)
-          // Only add the service if it's not already in the Map
+          const { id, name, gcfn, description, locations, url, phone, email, organisation, permalink } = service;
+          const distance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], locations[0]?.latitude || 0, locations[0]?.longitude || 0);
+          
           if (!servicesMap.has(id)) {
             servicesMap.set(id, { id, name, gcfn, description, locations, url, phone, email, organisation, distance, permalink });
           }
         });
-        // increment the page with 1 on each loop
         page++;
       } catch (err) {
         console.error(`Oops, something is wrong ${err}${page}`);
         break;
       }
-      // keep running until there's no next page or if count is 0
     } while (lastResult.next !== null && lastResult.count > 0);
   };
 
-  // Convert the Map values to an array
-  const services = Array.from(servicesMap.values());
-  // let's return the services array of objects
-  return services;
+  // Handle "All" selection
+  if (filterData.categories || filterData.community_groups) {
+    // If "All" is selected, fetch both categories and community groups
+    const categoryArray = filterData.categories?.split(',') || [];
+    for (const category of categoryArray) {
+      await fetchServicesForFilter('categories', category);
+    }
+    
+    // Split community groups into individual queries too
+    if (filterData.community_groups) {
+      const communityGroupArray = filterData.community_groups.split(';');
+      for (const group of communityGroupArray) {
+        await fetchServicesForFilter('community_groups', group);
+      }
+    }
+  } else {
+    // Handle individual filter selection
+    if (filterData.type === 'category') {
+      await fetchServicesForFilter('categories', filterData.value);
+    } else if (filterData.type === 'community_group') {
+      await fetchServicesForFilter('community_groups', filterData.value.replace(/,/g, ';'));
+    }
+  }
 
+  // Convert the Map values to an array and return
+  return Array.from(servicesMap.values());
 }
-
 
 //function to take the services array. We iterate each service to add a marker to the markersLayer LayerGroup
 const addMarkersToMap = async (services) => {
@@ -210,7 +207,6 @@ services.forEach(service => {
     // Set minimum zoom to current zoom level after fitting bounds
     setTimeout(() => {
       const currentZoom = map.getZoom();
-      console.log('currentZoom', currentZoom);
       map.setMinZoom(currentZoom);
     }, 100);  
     // Enable zoom in only
@@ -552,47 +548,79 @@ const buildLayout = (targetNode) => {
 }
 
 // buulds and adds the configured categories to the filter buttons
-const buildCategoryRadioButtons = (categories) => {
-  
+const buildCategoryRadioButtons = (categories, communityGroups) => {
   // clear the aliss-map-categories div
   document.querySelector('.aliss-map-categories').innerHTML = '';
-
-  // for each category in categories add a radio button to .aliss-map-categories
   const mapCategories = document.querySelector('.aliss-map-categories');
+
+  // Create arrays to store the filter options
+  const filterOptions = [];
+
+  // Add categories with their type
   categories.forEach(category => {
+    filterOptions.push({
+      id: `cat-${category}`,
+      value: category,
+      type: 'category',
+      label: category.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
+    });
+  });
+
+  // Add community groups with their type
+  if (Array.isArray(communityGroups)) {
+    communityGroups.forEach(group => {
+      filterOptions.push({
+        id: `group-${group}`,
+        value: group,
+        type: 'community_group',
+        label: group.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
+      });
+    });
+  }
+
+  // Create the "All" button first
+  let allInput = document.createElement('input');
+  allInput.type = 'radio';
+  allInput.name = 'filter';
+  allInput.id = 'all';
+  allInput.value = JSON.stringify({
+    categories: categories.join(','),
+    community_groups: Array.isArray(communityGroups) ? communityGroups.join(';') : ''
+  });
+  allInput.checked = true;
+
+  let allLabel = document.createElement('label');
+  allLabel.htmlFor = 'all';
+  allLabel.innerHTML = 'All';
+  
+  mapCategories.appendChild(allInput);
+  mapCategories.appendChild(allLabel);
+
+  // Add individual filter options
+  filterOptions.forEach(option => {
     let input = document.createElement('input');
     input.type = 'radio';
-    input.name = 'category';
-    input.id = category;
-    input.value = category;
+    input.name = 'filter';
+    input.id = option.id;
+    input.value = JSON.stringify({
+      type: option.type,
+      value: option.value
+    });
+
     let label = document.createElement('label');
-    label.htmlFor = category;
-    label.innerHTML = category.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+    label.htmlFor = option.id;
+    label.innerHTML = option.label;
+
     mapCategories.appendChild(input);
     mapCategories.appendChild(label);
   });
 
-  // create the all button
-  let input = document.createElement('input');
-  input.type = 'radio';
-  input.name = 'category';
-  input.id = 'all';
-  input.value = categories.join(',');
-  input.checked = true;
-  let label = document.createElement('label');
-  label.htmlFor = 'all';
-  label.innerHTML = 'All';
-  mapCategories.prepend(label);
-  mapCategories.prepend(input);
-
-
   // add listener to the radio buttons
-  document.querySelectorAll('input[name="category"]').forEach((elem) => {
+  document.querySelectorAll('input[name="filter"]').forEach((elem) => {
     elem.addEventListener("change", function(event) {
       doSearch();
     });
   });
-
 }
 
 // include some css in a style tag in the head
@@ -826,7 +854,10 @@ const initALISSMap = () => {
   });
 
   // now create the radio button filters and their listeners
-  buildCategoryRadioButtons(alissDefaults.categories);
+  buildCategoryRadioButtons(
+    alissDefaults.categories,
+    alissDefaults.communityGroups
+  );
 
   // we're ready, do the search
   doSearch();
