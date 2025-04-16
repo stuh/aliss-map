@@ -341,6 +341,13 @@ const buildResultsList = (services) => {
   const paginationEnabled = alissDefaults.pagination;
   const itemsPerPage = alissDefaults.itemsPerPage;
   
+  // Toggle the 'paginate' class based on whether pagination is enabled and needed
+  if (paginationEnabled && itemsPerPage > 0 && services.length > itemsPerPage) {
+    results_list.classList.add('paginate');
+  } else {
+    results_list.classList.remove('paginate');
+  }
+  
   let servicesToShow = services;
 
   if (paginationEnabled && itemsPerPage > 0 && services.length > itemsPerPage) {
@@ -770,6 +777,10 @@ style.innerHTML = `
       .aliss-map .results-list {
         max-height: 75vh;
         overflow-y: auto;
+      }
+      .aliss-map .results-list.paginate {
+        max-height: none;
+        overflow-y: visible;
       }
       .aliss-map .results-list .service-links{
         display:flex;

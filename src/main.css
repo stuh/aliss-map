@@ -48,6 +48,9 @@
   .aliss-map .results-list{
     max-height: 97vh;
   }
+  .aliss-map .results-list.paginate {
+    max-height: none;
+  }
   .aliss-map .results-list .location-map-link .pinsvg{
     @apply fill-darkblue;
   }

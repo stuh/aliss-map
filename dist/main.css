@@ -695,6 +695,10 @@ input[type="text"], input[type="number"], textarea {
   max-height: 97vh;
 }
 
+.aliss-map .results-list.paginate {
+  max-height: none;
+}
+
 .aliss-map .results-list .location-map-link .pinsvg {
   fill: #004785;
 }
@@ -732,6 +736,10 @@ input[type="text"], input[type="number"], textarea {
 .aliss-map .pagination-controls span {
   font-size: 16px;
   margin: 0 5px;
+}
+
+.visible {
+  visibility: visible;
 }
 
 .absolute {
@@ -1088,10 +1096,6 @@ input[type="text"], input[type="number"], textarea {
   color: rgb(255 255 255 / var(--tw-text-opacity));
 }
 
-.outline {
-  outline-style: solid;
-}
-
 .blur {
   --tw-blur: blur(8px);
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
@@ -1099,14 +1103,6 @@ input[type="text"], input[type="number"], textarea {
 
 .filter {
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
-}
-
-.transition {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
 }
 
 .aliss-map  .aliss-search-button {
