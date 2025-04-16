@@ -1,7 +1,5 @@
-
-
 let alissDefaults = {}
-
+let currentPage = 1; // Add current page tracking
 
 let postCodeToLatLngHistory = {}; // used as a cache to hold any previously fetched latlng from the api. 
 let markersLayer = ''; // global markersLayer to hold the markers
@@ -11,6 +9,7 @@ let query_field; // ref to the query field
 let output_msg; // ref to the output message div
 let results_list; // ref to the results list div
 let markersArray = []; // array to hold the markers
+let validLatLngs = []; // Global array to store valid coordinates
 
 
 
@@ -169,7 +168,7 @@ if (map.hasLayer(markersLayer)) {
 // create an array to hold the latlngs of the markers
 const postCode = getPostCode();
 const pclatlng = await getLatLngFromPostCode(postCode)
-const validLatLngs = []; // Array to store valid coordinates
+validLatLngs = []; // Reset the global array to store valid coordinates
 
 // for each service build the popup and then add to the layerGroup
 services.forEach(service => {
@@ -189,14 +188,16 @@ services.forEach(service => {
 
     });
   }
-  // Update the total count display
-  if (getPostCode()) {
-    document.getElementById('aliss-totals').textContent = `${services.length} services found. ${validLatLngs.length} locations shown within ${alissDefaults.defaultSearchRadius/1000}km of ${getPostCode()}`;
-    
-  } else {
-    document.getElementById('aliss-totals').textContent = `${services.length} services found`;
-  }
+  
 })
+
+// Update the total count display
+if (getPostCode()) {
+  document.getElementById('aliss-totals').textContent = `${services.length} services found at ${validLatLngs.length} locations within ${alissDefaults.defaultSearchRadius/1000}km of ${getPostCode()}`;
+  
+} else {
+  document.getElementById('aliss-totals').textContent = `${services.length} services found`;
+}
 
 // set the bounds of the map and add make the map fit the bounds 
 // If we have valid coordinates, fit the map to show all markers
@@ -327,16 +328,90 @@ const buildServiceCard = (service, locationOverride) => {
 }
 
 const buildResultsList = (services) => {
-
-results_list.innerHTML = `<h3 style="margin-top:20px;" id="aliss-totals"></h3>`;
-
-services.forEach( service => {
+  // Clear previous results
+  results_list.innerHTML = '';
   
-  let serviceCard = buildServiceCard(service);
-  results_list.appendChild(serviceCard);
+  // Remove previous pagination controls if they exist
+  const paginationContainer = document.getElementById('aliss-pagination-controls');
+  if (paginationContainer) {
+    paginationContainer.remove();
+  }
 
-});
+  // Check if pagination is enabled and there are enough items to paginate
+  const paginationEnabled = alissDefaults.pagination;
+  const itemsPerPage = alissDefaults.itemsPerPage;
+  
+  let servicesToShow = services;
 
+  if (paginationEnabled && itemsPerPage > 0 && services.length > itemsPerPage) {
+    const totalPages = Math.ceil(services.length / itemsPerPage);
+    // Ensure currentPage is within valid range
+    currentPage = Math.max(1, Math.min(currentPage, totalPages));
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    servicesToShow = services.slice(startIndex, endIndex);
+
+    // Build pagination controls
+    buildPaginationControls(totalPages, services);
+  } else {
+    // If pagination is disabled or not needed, show all services
+    servicesToShow = services;
+  }
+
+  // Append the service cards for the current page
+  servicesToShow.forEach(service => {
+    let serviceCard = buildServiceCard(service);
+    results_list.appendChild(serviceCard);
+  });
+}
+
+const buildPaginationControls = (totalPages, allServices) => {
+  const container = document.createElement('div');
+  container.id = 'aliss-pagination-controls';
+  container.className = 'pagination-controls';
+
+  // Previous Button
+  const prevButton = document.createElement('button');
+  prevButton.textContent = 'Previous';
+  prevButton.className = 'pagination-button';
+  prevButton.disabled = currentPage === 1;
+  prevButton.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      buildResultsList(allServices);
+      scrollToResultsTop();
+    }
+  });
+  container.appendChild(prevButton);
+
+  // Page Number Indicator
+  const pageInfo = document.createElement('span');
+  pageInfo.textContent = ` Page ${currentPage} of ${totalPages} `;
+  pageInfo.style.margin = '0 10px';
+  container.appendChild(pageInfo);
+
+  // Next Button
+  const nextButton = document.createElement('button');
+  nextButton.textContent = 'Next';
+  nextButton.className = 'pagination-button';
+  nextButton.disabled = currentPage === totalPages;
+  nextButton.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      buildResultsList(allServices);
+      scrollToResultsTop();
+    }
+  });
+  container.appendChild(nextButton);
+
+  // Append controls below the results list
+  results_list.insertAdjacentElement('afterend', container);
+}
+
+// Helper function to scroll to the top of the results list
+const scrollToResultsTop = () => {
+  results_list.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 const getLatLngFromPostCode = async (postcode) => {
@@ -382,6 +457,8 @@ async function doSearch() {
 
   // show the loader
   loader.classList.remove('load-hide');
+  // Reset current page to 1 for new searches
+  currentPage = 1;
 
   // get all the services from the API into an arrayOfObjects
   const servicesList = await getServices('https://api.aliss.org/v5/services/');
@@ -393,13 +470,11 @@ async function doSearch() {
       : -1
   })
   
-  // show results list
+  // show results list first with pagination handling
   buildResultsList(sortedArray);
 
   // add markers to the map await so we can calculate the total that meet the distance critieria and use it in the results list
   await addMarkersToMap(sortedArray);
-
-
 
   // hide the loader
   loader.classList.add('load-hide');
@@ -423,6 +498,7 @@ const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
 function deg2rad(deg) {
   return deg * (Math.PI/180)
 }
+
 
 // add css to the page
 const addCSSFile = (url) => {
@@ -543,6 +619,7 @@ const buildLayout = (targetNode) => {
           <div class="map-holder">
               <div id="map"></div>
           </div>
+          <h3 id="aliss-totals" style="margin:20px 0;"></h3>
           <div class="results-list"></div>
       `;
 
@@ -761,6 +838,24 @@ style.innerHTML = `
         color: #005231;
       }
 
+      /* Pagination Controls Styling */
+      .aliss-map .pagination-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        gap: 0.5rem;
+      }
+      
+      .aliss-map .pagination-controls button {
+        padding: 0.6em 0.5em;
+        font-size: 20px;
+        min-width: 150px;
+        position: relative;
+
+      }
+
       `
 document.head.appendChild(style);
 
@@ -775,13 +870,17 @@ addCSSFile('https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Def
 
 // init the widget
 const initALISSMap = () => {
-  // set the defaults
+  // set the defaults by merging provided config with internal defaults if needed
   alissDefaults = {
-    ...alissMapConfig
+    defaultLatLng: [56.4907, -4.2026], // Sensible default center
+    defaultSearchRadius: 10000, // Default radius
+    pagination: false, // Default pagination off
+    itemsPerPage: 20, // Default items per page
+    ...alissMapConfig // Override with user-provided config
   }
 
   // build basic layout
-  buildLayout(alissMapConfig.target);
+  buildLayout(alissDefaults.target);
 
   // create and turn on the loader
   createLoaderSVG();

@@ -30,12 +30,10 @@
     @apply text-[20px] font-bold;
   }
   /* input text boxes */
-  input[type="text"], textarea{
+  input[type="text"], input[type="number"], textarea{
     @apply text-[20px]/[23px] font-normal px-4 py-3;
   }
-  input[type="text"], textarea{
-    @apply text-[20px]/[23px] font-normal px-4 py-3;
-  }
+
 
  
   
@@ -54,7 +52,40 @@
     @apply fill-darkblue;
   }
   
+  .aliss-map .pagination-controls button {
+    font-size: 20px;
+    min-width: 100px;
+    padding: 8px 16px;
+    border: 2px solid white;
+    background-color: #004785;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
   
+  .aliss-map .pagination-controls button:hover:not(:disabled) {
+    background-color: #004785;
+    color: white;
+  }
+  
+  .aliss-map .pagination-controls button:focus {
+    background-color: #fdd522;
+    color: #212121;
+    border-color: #212121;
+    outline: none;
+  }
+  
+  .aliss-map .pagination-controls button:disabled {
+    background-color: #D9D9D9;
+    color: #212121;
+    border-color: #D9D9D9;
+    cursor: not-allowed;
+  }
+  
+  .aliss-map .pagination-controls span {
+    font-size: 16px;
+    margin: 0 5px;
+  }
 }
 
 .aliss-map  .aliss-search-button{
