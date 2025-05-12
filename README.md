@@ -19,7 +19,10 @@ Include the Aliss Map embed code in your page and the Map and Service list will 
       defaultPostCode: 'G11AB',
       defaultLatLng: [55.86521,-4.2699],
       defaultSearchRadius: 10000,
-      categories: ["children-and-families" ,"community-resources", "food-and-nutrition"]
+      categories: ["children-and-families" ,"community-resources", "food-and-nutrition"],
+      communityGroups: ["adults","care-experienced-people"],
+      pagination: true,
+      itemsPerPage: 20
     }
   </script>
   
@@ -50,7 +53,10 @@ Include the Aliss Map embed code in your page and the Map and Service list will 
       defaultPostCode: 'G11AB',
       defaultLatLng: [55.86521, -4.26990],
       defaultSearchRadius: 10000,
-      categories: ["children-and-families" ,"community-resources", "food-and-nutrition"]
+      categories: ["children-and-families" ,"community-resources", "food-and-nutrition"],
+      communityGroups: ["adults","care-experienced-people"],
+      pagination: true,
+      itemsPerPage: 20
   }
   </script>
 ```
@@ -74,6 +80,9 @@ Here are the available options you can add to your alissMapConfig object:
 | `defaultLatLng` | `[55.86521, -4.26990]` | Array | An array of the Latitude and Longitude of the map's center |
 | `defaultSearchRadius` | `10000` | Number | The default ALISS search radius |
 | `categories` | `null` | Array | ALISS category slugs you want to show. |
+| `communityGroups` | `null` | Array | ALISS community group slugs you want to show. |
+| `pagination` | `false` | Boolean | Set to true to paginate the list of results (defaults to 20 per page). |
+| `itemsPerPage` | `20` | Number | The number of list results per page. |
 
 You can find the full list of categories including slugs via the [ALISS API](https://www.aliss.org/api/v4/categories/) or use our [map builder tool to create your embed](https://map.aliss.org/dist/index.html).
 
