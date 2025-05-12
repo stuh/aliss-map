@@ -40,31 +40,30 @@ const doPostCodeSearch = () => {
 // add listener to the location links, we listen to document clicks
 // as these links are dynamically created after load
 document.addEventListener('click', function(e){
-  // if this is a location-map-link in the .results-list div then...
-  if(e.target && e.target.parentNode.classList== 'location-map-link' && e.target.parentNode.parentNode.parentNode.parentNode.classList == 'results-list'){
+  // Only handle clicks on location links inside the results list
+  if (
+    e.target &&
+    e.target.tagName === 'A' &&
+    e.target.dataset.markerid &&
+    e.target.closest('.results-list')
+  ) {
+    const markerId = e.target.dataset.markerid;
+    const marker = markersArray[markerId];
+    if (marker) {
+      // Zoom and center the map on the marker
+      map.setView(marker.getLatLng(), 17, { animate: true });
+      marker.openPopup();
 
-    // zoom in and center the map on this services latlng
-    map.setView([e.target.parentNode.dataset.lat, e.target.parentNode.dataset.lng], 17);
-    
-    // get the offset of the map
-    const offsetTop = document.querySelector('.map-holder').offsetTop - 30;
-
-    // scroll to the map
-    scroll({
-      top: offsetTop,
-      behavior: "smooth"
-    });
-
-    // get the data-markerid from the link and trigger the popup
-    // disable for now as it's quite intrusive
-    // const markerId = e.target.dataset.markerid;
-    // const marker = markersArray[markerId];
-    // if (marker) {
-    //   marker.openPopup();
-    // } else {
-    //   console.log('Marker not found with ID:', markerId);
-    // }
-
+      // Optionally scroll to the map
+      const offsetTop = document.querySelector('.map-holder').offsetTop - 30;
+      scroll({
+        top: offsetTop,
+        behavior: "smooth"
+      });
+    } else {
+      console.log('Marker not found with ID:', markerId);
+    }
+    e.preventDefault();
   }
 });
 
@@ -316,7 +315,7 @@ const buildServiceCard = (service, locationOverride) => {
   locations.forEach(location => {
     const locationClass = location.latitude && location.longitude ? "location-map-link" : "location-text";
     const dataAttrs = location.latitude && location.longitude ? 
-      `data-lat="${location.latitude}" data-lng="${location.longitude}"` : '';
+      `data-markerid="${service.id}${location.latitude}${location.longitude}"` : '';
       
     locationsHTML += `<span class="${locationClass}" ${dataAttrs}>
       <a href="Javascript:;" tabindex="0" data-markerid="${service.id}${location.latitude}${location.longitude}">
