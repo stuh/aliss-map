@@ -491,7 +491,7 @@ async function doSearch() {
 const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
   var R = 6371; // Radius of the earth in km
   var dLat = deg2rad(lat2-lat1);  // deg2rad below
-  var dLon = deg2rad(lon2-lon1); 
+  var dLon = deg2rad(lat2-lon1); 
   var a = 
     Math.sin(dLat/2) * Math.sin(dLat/2) +
     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
@@ -643,32 +643,42 @@ const buildCategoryRadioButtons = (categories) => {
 
   // for each category in categories add a radio button to .aliss-map-categories
   const mapCategories = document.querySelector('.aliss-map-categories');
+  
+  // create the all button first
+  let allWrapper = document.createElement('span'); // Wrapper for 'All'
+  allWrapper.className = 'category-item';
+  let allInput = document.createElement('input');
+  allInput.type = 'radio';
+  allInput.name = 'category';
+  allInput.id = 'all';
+  allInput.value = categories.join(',');
+  allInput.checked = true;
+  let allLabel = document.createElement('label');
+  allLabel.htmlFor = 'all';
+  allLabel.innerHTML = 'All';
+  allWrapper.appendChild(allInput);
+  allWrapper.appendChild(allLabel);
+  mapCategories.appendChild(allWrapper); // Append the wrapper
+
+  // Add individual categories
   categories.forEach(category => {
+    let wrapper = document.createElement('span'); // Create a wrapper span
+    wrapper.className = 'category-item'; // Add a class for styling
+
     let input = document.createElement('input');
     input.type = 'radio';
     input.name = 'category';
     input.id = category;
     input.value = category;
+    
     let label = document.createElement('label');
     label.htmlFor = category;
     label.innerHTML = category.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
-    mapCategories.appendChild(input);
-    mapCategories.appendChild(label);
+    
+    wrapper.appendChild(input); // Append input to wrapper
+    wrapper.appendChild(label); // Append label to wrapper
+    mapCategories.appendChild(wrapper); // Append wrapper to the main container
   });
-
-  // create the all button
-  let input = document.createElement('input');
-  input.type = 'radio';
-  input.name = 'category';
-  input.id = 'all';
-  input.value = categories.join(',');
-  input.checked = true;
-  let label = document.createElement('label');
-  label.htmlFor = 'all';
-  label.innerHTML = 'All';
-  mapCategories.prepend(label);
-  mapCategories.prepend(input);
-
 
   // add listener to the radio buttons
   document.querySelectorAll('input[name="category"]').forEach((elem) => {
@@ -746,9 +756,15 @@ style.innerHTML = `
         align-items:center;
         flex-wrap: wrap;
       }
+      .aliss-map .aliss-map-categories .category-item {
+        display: inline-flex; 
+        align-items: center;
+        margin-right: 15px;
+        white-space: nowrap; 
+      }
       .aliss-map .aliss-map-categories label{
-        padding:0 10px 0 5px;
-
+        padding:0 0 0 5px;
+        cursor: pointer; 
       }
 
       .aliss-map h3.service-title{
