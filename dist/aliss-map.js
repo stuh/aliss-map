@@ -40,31 +40,30 @@ const doPostCodeSearch = () => {
 // add listener to the location links, we listen to document clicks
 // as these links are dynamically created after load
 document.addEventListener('click', function(e){
-  // if this is a location-map-link in the .results-list div then...
-  if(e.target && e.target.parentNode.classList== 'location-map-link' && e.target.parentNode.parentNode.parentNode.parentNode.classList == 'results-list'){
+  // Only handle clicks on location links inside the results list
+  if (
+    e.target &&
+    e.target.tagName === 'A' &&
+    e.target.dataset.markerid &&
+    e.target.closest('.results-list')
+  ) {
+    const markerId = e.target.dataset.markerid;
+    const marker = markersArray[markerId];
+    if (marker) {
+      // Zoom and center the map on the marker
+      map.setView(marker.getLatLng(), 17, { animate: true });
+      marker.openPopup();
 
-    // zoom in and center the map on this services latlng
-    map.setView([e.target.parentNode.dataset.lat, e.target.parentNode.dataset.lng], 17);
-    
-    // get the offset of the map
-    const offsetTop = document.querySelector('.map-holder').offsetTop - 30;
-
-    // scroll to the map
-    scroll({
-      top: offsetTop,
-      behavior: "smooth"
-    });
-
-    // get the data-markerid from the link and trigger the popup
-    // disable for now as it's quite intrusive
-    // const markerId = e.target.dataset.markerid;
-    // const marker = markersArray[markerId];
-    // if (marker) {
-    //   marker.openPopup();
-    // } else {
-    //   console.log('Marker not found with ID:', markerId);
-    // }
-
+      // Optionally scroll to the map
+      const offsetTop = document.querySelector('.map-holder').offsetTop - 30;
+      scroll({
+        top: offsetTop,
+        behavior: "smooth"
+      });
+    } else {
+      console.log('Marker not found with ID:', markerId);
+    }
+    e.preventDefault();
   }
 });
 
@@ -108,45 +107,49 @@ const getServices = async (baseurl) => {
   const categoryArray = getSelectedCategory().split(',');
   // we can then loop through the categories and add all the services for each one to a services Map, we're using a map with id as the key so we can avoid duplication of services in the list
   let servicesMap = new Map(); // Use a Map to store unique services
-
-  for (const cat of categoryArray) {
-    // set the baseUrl
+  
+  // Helper function to fetch all pages for a single category
+  const fetchCategoryData = async (cat) => {
+    let allServicesForCategory = [];
     const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&page_size=1000&radius=${radius}&format=json&page=`;
-    // const baseUrl = `/memberslist?q=${q}&category=${category}&postcode=${postCode}&page_size=1000&radius=${radius}&format=json&page=`;
-
-    // set first page
     let page = 1;
-    // create empty array where we want to store the services objects for each loop
-    
-    // create a lastResult array which is going to be used to check if there is a next page
     let lastResult = [];
+    
     do {
-      // try catch to catch any errors in the async api call
       try {
-        // use fetch to make api call
         const resp = await fetch(`${baseUrl}${page}`);
         const data = await resp.json();
         lastResult = data;
-        const count = data.count;
-        data.data.forEach(service => {
-          // destructure the services object and add to array
-          const { name, gcfn, description, locations, url, phone, email, organisation, permalink, id } = service;
-          // for each service calulcate its distance from the currently searched postcode, we'll sort by this later when building the card list below the map
-          const distance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], locations[0]?.latitude || 0, locations[0]?.longitude || 0)
-          // Only add the service if it's not already in the Map
-          if (!servicesMap.has(id)) {
-            servicesMap.set(id, { id, name, gcfn, description, locations, url, phone, email, organisation, distance, permalink });
-          }
-        });
-        // increment the page with 1 on each loop
+        allServicesForCategory = allServicesForCategory.concat(data.data);
         page++;
       } catch (err) {
-        console.error(`Oops, something is wrong ${err}${page}`);
+        console.error(`Error fetching category ${cat}, page ${page}: ${err}`);
         break;
       }
-      // keep running until there's no next page or if count is 0
     } while (lastResult.next !== null && lastResult.count > 0);
+    
+    return allServicesForCategory;
   };
+
+  // Fetch data for all categories in parallel
+  try {
+    const categoryPromises = categoryArray.map(cat => fetchCategoryData(cat));
+    const allCategoryResults = await Promise.all(categoryPromises);
+    
+    // Process all results and add to the servicesMap
+    allCategoryResults.flat().forEach(service => {
+      const { name, gcfn, description, locations, url, phone, email, organisation, permalink, id } = service;
+      // Calculate distance
+      const distance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], locations[0]?.latitude || 0, locations[0]?.longitude || 0);
+      
+      // Only add if not already in the map
+      if (!servicesMap.has(id)) {
+        servicesMap.set(id, { id, name, gcfn, description, locations, url, phone, email, organisation, distance, permalink });
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching services:', err);
+  }
 
   // Convert the Map values to an array
   const services = Array.from(servicesMap.values());
@@ -158,38 +161,82 @@ const getServices = async (baseurl) => {
 
 //function to take the services array. We iterate each service to add a marker to the markersLayer LayerGroup
 const addMarkersToMap = async (services) => {
+  // Performance measurement
+  const startTime = performance.now();
 
+  // if we already have a layer group, clear it of Markers.
+  if (map.hasLayer(markersLayer)) {
+    markersLayer.clearLayers();
+  }
 
-// if we already have a layer group, clear it of Markers.
-if (map.hasLayer(markersLayer)) {
-  markersLayer.clearLayers();
-}
-
-// create an array to hold the latlngs of the markers
-const postCode = getPostCode();
-const pclatlng = await getLatLngFromPostCode(postCode)
-validLatLngs = []; // Reset the global array to store valid coordinates
-
-// for each service build the popup and then add to the layerGroup
-services.forEach(service => {
-  if (service.locations.length > 0) {
-
-    service.locations.forEach(location => {
-      // build the html servicecard but use the override feature for each location
-      let serviceCard = buildServiceCard(service, location);
+  // create an array to hold the latlngs of the markers
+  const postCode = getPostCode();
+  const pclatlng = await getLatLngFromPostCode(postCode)
+  validLatLngs = []; // Reset the global array to store valid coordinates
+  
+  // Create markers in batches to avoid UI freeze
+  const batchSize = 200; // Process 200 markers at a time
+  const markers = [];
+  const maxRadius = alissDefaults.defaultSearchRadius/1000;
+  
+  // First pass: collect all valid markers without rendering
+  services.forEach(service => {
+    if (service.locations.length > 0) {
+      service.locations.forEach(location => {
+        if (location.latitude && location.longitude) {
+          let locationDistance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], location.latitude || 0, location.longitude || 0);
+          if (locationDistance < maxRadius) {
+            // Store data for deferred marker creation
+            markers.push({
+              service,
+              location,
+              latlng: [location.latitude, location.longitude]
+            });
+            
+            // Add to valid coordinates for bounds calculation
+            validLatLngs.push([location.latitude, location.longitude]);
+          }
+        }
+      });
+    }
+  });
+  
+  // Second pass: Create and add markers in batches
+  const totalMarkers = markers.length;
+  const batches = Math.ceil(totalMarkers / batchSize);
+  
+  // Create and add markers in batches
+  for (let i = 0; i < batches; i++) {
+    const start = i * batchSize;
+    const end = Math.min((i + 1) * batchSize, totalMarkers);
+    const batch = markers.slice(start, end);
+    
+    batch.forEach(({ service, location, latlng }) => {
+      // Build popup content only when needed (lazy loading)
+      const markerObj = L.marker(latlng);
       
-      let locationDistance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], location.latitude || 0, location.longitude || 0)
-      // add the marker if it has a latlng
-      if (location.latitude && location.longitude && (locationDistance < alissDefaults.defaultSearchRadius/1000)) {
-        markersArray[`${service.id}${location.latitude}${location.longitude}`] = L.marker([location.latitude, location.longitude]).bindPopup(serviceCard).bindTooltip(`<strong>${service.name}</strong><br/>${location.street_address}<br/>${location.locality}`).addTo(markersLayer);
-        // add latlng to the array to be used to set the bonds of the map
-        validLatLngs.push([location.latitude, location.longitude]);
-      }
-
+      // Use lazy binding of popup and tooltip to improve performance
+      const popupFn = () => {
+        const serviceCard = buildServiceCard(service, location);
+        return serviceCard;
+      };
+      
+      markerObj.bindPopup(popupFn)
+               .bindTooltip(`<strong>${service.name}</strong><br/>${location.street_address || ''}<br/>${location.locality || ''}`);
+               
+      markersArray[`${service.id}${location.latitude}${location.longitude}`] = markerObj;
+      markerObj.addTo(markersLayer);
     });
+    
+    // Allow a small break for UI to respond between batches
+    if (i < batches - 1) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
   }
   
-})
+  // Performance logging
+  const endTime = performance.now();
+  console.log(`Added ${totalMarkers} markers in ${(endTime - startTime).toFixed(2)}ms`);
 
 // Update the total count display
 if (getPostCode()) {
@@ -211,7 +258,6 @@ if (getPostCode()) {
     // Set minimum zoom to current zoom level after fitting bounds
     setTimeout(() => {
       const currentZoom = map.getZoom();
-      console.log('currentZoom', currentZoom);
       map.setMinZoom(currentZoom);
     }, 100);  
     // Enable zoom in only
@@ -231,33 +277,27 @@ if (getPostCode()) {
 // map popup as its confusing, so we have a locationOverride parameter that lets us replace the array of objects with a single object instead.
 // you can see this called in the addMarkersToMap() function
 const buildServiceCard = (service, locationOverride) => {
-
+  // Use document fragment for better performance when creating multiple DOM nodes
+  const fragment = document.createDocumentFragment();
   let serviceCard = document.createElement('div');
   serviceCard.className = "service-card";
+  fragment.appendChild(serviceCard);
 
+  // Use a single innerHTML operation for the title instead of multiple steps
+  serviceCard.innerHTML = `
+    <h3 class="service-title">
+      <a href="${service.permalink}" target="_blank">${service.name}</a>
+    </h3>
+    <div class="service-org">
+      ${service.organisation.aliss_url 
+        ? `By <a href="${service.organisation.aliss_url}" target="_blank">${service.organisation.name}</a>` 
+        : `By ${service.organisation.name}`}
+    </div>
+    ${service.distance < 1000 ? `<span class="service-distance">${service.distance.toFixed(2)} km away</span>` : ''}
+  `;
   
-  let serviceTitle = document.createElement('h3');
-  serviceTitle.className = "service-title";
-  serviceTitle.innerHTML = `<a href="${service.permalink}" target="_blank">${service.name}</a>`;
-  serviceCard.appendChild(serviceTitle);
-  
-
-  let serviceOrg = document.createElement('div');
-  serviceOrg.className = "service-org";
-  if (service.organisation.aliss_url) {
-    serviceOrg.innerHTML = `By <a href="${service.organisation.aliss_url}" target="_blank">${service.organisation.name}</a>`;
-  } else {
-    serviceOrg.innerHTML = `By ${service.organisation.name}`;
-  }
-  serviceCard.appendChild(serviceOrg);
-  
-  // some services have no location so we dont show a distance for these.
-  if (service.distance < 1000) {
-    let serviceDistance = document.createElement('span');
-    serviceDistance.className = "service-distance";
-    serviceDistance.innerHTML = service.distance.toFixed(2) + 'km away';
-    serviceCard.appendChild(serviceDistance);
-  }
+  // Get reference to service card after HTML was set
+  serviceCard = fragment.querySelector('.service-card');
 
   let serviceDescription = document.createElement('div');
   serviceDescription.className = "service-description";
@@ -268,66 +308,51 @@ const buildServiceCard = (service, locationOverride) => {
   serviceLocations.className = "service-locations";
 
   // here we can swap out the services.locations for a single injected location for popups
-  let locations = [];
-  if (locationOverride) {
-    locations = [locationOverride];
-  } else {
-    locations = service.locations;
-  }
-  // carry on with the loop een if its only for an array of length 1
+  let locations = locationOverride ? [locationOverride] : service.locations;
+  
+  // Optimize location rendering by creating HTML string once
+  let locationsHTML = '';
   locations.forEach(location => {
-    let locationText = document.createElement('span');
-    // if location has a latitute and longitude then we can add a link to the map
-      locationText.innerHTML = `<a href="Javascript:;" tabindex="0" data-markerid="${service.id}${location.latitude}${location.longitude}">${location.formatted_address}</a> <svg class="pinsvg" width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>`;
-    if (location.latitude && location.longitude) {
-      locationText.className = "location-map-link";
-      locationText.dataset.lat = location.latitude;
-      locationText.dataset.lng = location.longitude;
-    } else {
-      locationText.className = "location-text";
-    }
-    serviceLocations.appendChild(locationText);
+    const locationClass = location.latitude && location.longitude ? "location-map-link" : "location-text";
+    const dataAttrs = location.latitude && location.longitude ? 
+      `data-markerid="${service.id}${location.latitude}${location.longitude}"` : '';
+      
+    locationsHTML += `<span class="${locationClass}" ${dataAttrs}>
+      <a href="Javascript:;" tabindex="0" data-markerid="${service.id}${location.latitude}${location.longitude}">
+        ${location.formatted_address}
+      </a> 
+      <svg class="pinsvg" width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+        <path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/>
+      </svg>
+    </span>`;
   });
+  serviceLocations.innerHTML = locationsHTML;
   serviceCard.appendChild(serviceLocations);
 
-
-
-  let serviceLinks = document.createElement('div');
-  serviceLinks.className = "service-links";
-  serviceCard.appendChild(serviceLinks);
-
-
+  // Service links
+  let linksHTML = '<div class="service-links">';
   if (service.url) {
-    let serviceUrl = document.createElement('a');
-    serviceUrl.className = "service-url";
-    serviceUrl.href = service.url;
-    serviceUrl.target = '_blank';
-    serviceUrl.innerHTML = 'Visit the website';
-    serviceLinks.appendChild(serviceUrl);
+    linksHTML += `<a class="service-url" href="${service.url}" target="_blank">Visit the website</a>`;
   }
-
   if (service.phone) {
-    let servicePhone = document.createElement('a');
-    servicePhone.className = "service-phone";
-    servicePhone.href = `tel:${service.phone}`;
-    servicePhone.target = '_blank';
-    servicePhone.innerHTML = service.phone;
-    serviceLinks.appendChild(servicePhone);
+    linksHTML += `<a class="service-phone" href="tel:${service.phone}" target="_blank">${service.phone}</a>`;
   }
-  
   if (service.email) {
-    let serviceEmail = document.createElement('a');
-    serviceEmail.className = "service-email";
-    serviceEmail.href = `mailto:${service.email}`;
-    serviceEmail.target = '_blank';
-    serviceEmail.innerHTML = service.email;
-    serviceLinks.appendChild(serviceEmail);
+    linksHTML += `<a class="service-email" href="mailto:${service.email}" target="_blank">${service.email}</a>`;
   }
-
+  linksHTML += '</div>';
+  
+  const linksContainer = document.createElement('div');
+  linksContainer.innerHTML = linksHTML;
+  serviceCard.appendChild(linksContainer.firstChild);
+  
   return serviceCard;
 }
 
 const buildResultsList = (services) => {
+  // Performance measurement
+  const startTime = performance.now();
+
   // Clear previous results
   results_list.innerHTML = '';
   
@@ -366,11 +391,21 @@ const buildResultsList = (services) => {
     servicesToShow = services;
   }
 
+  // Use a document fragment to batch DOM operations
+  const fragment = document.createDocumentFragment();
+  
   // Append the service cards for the current page
   servicesToShow.forEach(service => {
-    let serviceCard = buildServiceCard(service);
-    results_list.appendChild(serviceCard);
+    const serviceCard = buildServiceCard(service);
+    fragment.appendChild(serviceCard);
   });
+  
+  // Add all cards to the DOM in one operation
+  results_list.appendChild(fragment);
+  
+  // Performance logging
+  const endTime = performance.now();
+  console.log(`Rendered ${servicesToShow.length} service cards in ${(endTime - startTime).toFixed(2)}ms`);
 }
 
 const buildPaginationControls = (totalPages, allServices) => {
@@ -643,32 +678,42 @@ const buildCategoryRadioButtons = (categories) => {
 
   // for each category in categories add a radio button to .aliss-map-categories
   const mapCategories = document.querySelector('.aliss-map-categories');
+  
+  // create the all button first
+  let allWrapper = document.createElement('span'); // Wrapper for 'All'
+  allWrapper.className = 'category-item';
+  let allInput = document.createElement('input');
+  allInput.type = 'radio';
+  allInput.name = 'category';
+  allInput.id = 'all';
+  allInput.value = categories.join(',');
+  allInput.checked = true;
+  let allLabel = document.createElement('label');
+  allLabel.htmlFor = 'all';
+  allLabel.innerHTML = 'All';
+  allWrapper.appendChild(allInput);
+  allWrapper.appendChild(allLabel);
+  mapCategories.appendChild(allWrapper); // Append the wrapper
+
+  // Add individual categories
   categories.forEach(category => {
+    let wrapper = document.createElement('span'); // Create a wrapper span
+    wrapper.className = 'category-item'; // Add a class for styling
+
     let input = document.createElement('input');
     input.type = 'radio';
     input.name = 'category';
     input.id = category;
     input.value = category;
+    
     let label = document.createElement('label');
     label.htmlFor = category;
     label.innerHTML = category.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
-    mapCategories.appendChild(input);
-    mapCategories.appendChild(label);
+    
+    wrapper.appendChild(input); // Append input to wrapper
+    wrapper.appendChild(label); // Append label to wrapper
+    mapCategories.appendChild(wrapper); // Append wrapper to the main container
   });
-
-  // create the all button
-  let input = document.createElement('input');
-  input.type = 'radio';
-  input.name = 'category';
-  input.id = 'all';
-  input.value = categories.join(',');
-  input.checked = true;
-  let label = document.createElement('label');
-  label.htmlFor = 'all';
-  label.innerHTML = 'All';
-  mapCategories.prepend(label);
-  mapCategories.prepend(input);
-
 
   // add listener to the radio buttons
   document.querySelectorAll('input[name="category"]').forEach((elem) => {
@@ -746,9 +791,15 @@ style.innerHTML = `
         align-items:center;
         flex-wrap: wrap;
       }
+      .aliss-map .aliss-map-categories .category-item {
+        display: inline-flex; 
+        align-items: center;
+        margin-right: 15px;
+        white-space: nowrap; 
+      }
       .aliss-map .aliss-map-categories label{
-        padding:0 10px 0 5px;
-
+        padding:0 0 0 5px;
+        cursor: pointer; 
       }
 
       .aliss-map h3.service-title{
@@ -896,16 +947,37 @@ const initALISSMap = () => {
   // create and turn on the loader
   createLoaderSVG();
 
-  // create the base map
-  map = L.map('map').setView(alissDefaults.defaultLatLng, 12);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // create the base map with optimized options
+  map = L.map('map', {
+    preferCanvas: true,  // Use canvas renderer for better performance with many markers
+    zoomAnimation: false, // Disable zoom animation for better performance
+    markerZoomAnimation: false, // Disable marker zoom animation
+    fadeAnimation: false, // Disable fade animation
+    attributionControl: false, // Add attribution separately for better initial load
+    scrollWheelZoom: false // Enable only after initial load
+  }).setView(alissDefaults.defaultLatLng, 12);
+  
+  // Add the tile layer with options for better performance
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
+    updateWhenZooming: false,
+    updateWhenIdle: true,
     attribution: `&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> | &copy <a href="https://www.ons.gov.uk/methodology/geography/licences">Crown copyright and database right ${new Date().getFullYear()}</a> `
   }).addTo(map);
-  // create a map layer to hold the markers
-  markersLayer = L.markerClusterGroup();
-  // markersLayer = L.layerGroup();
-  // add it to the map
+  
+  // Add attribution separately
+  L.control.attribution({position: 'bottomright'}).addTo(map);
+  
+  // Create marker cluster group with optimized options
+  markersLayer = L.markerClusterGroup({
+    chunkedLoading: true,
+    chunkInterval: 50,
+    chunkDelay: 1,
+    spiderfyOnMaxZoom: false,
+    disableClusteringAtZoom: 17
+  });
+  
+  // Add it to the map
   map.addLayer(markersLayer);
 
   // reference the aliss-map-search-form

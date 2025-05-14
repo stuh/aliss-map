@@ -54,6 +54,7 @@
                     data-target="#aliss-communitygroups"
                 ><label for="aliss-communitygroups" class="text-almostblack font-black heading2 pb-3 cursor-pointer">Select who categories (optional) <i class="text-darkblue fas fa-angle-down"></i> </button></label>
         
+        <p class="mb-4 hidden" id="aliss-communitygroups-hint">Select “Who” categories to refine services for specific groups of people. Selecting a who category will show services which have both the service category and who category selected.</p>
         <div id="aliss-communitygroups" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto hidden">
         </div>
       </div>
@@ -353,18 +354,24 @@ function moveFocus(currentCheckbox, direction) {
 function toggleCommunityGroups() {
   const button = document.querySelector('button[aria-controls="aliss-communitygroups"]');
   const target = document.getElementById('aliss-communitygroups');
+  const hint = document.getElementById('aliss-communitygroups-hint');
+  
+  // Initially hide the hint paragraph
+  hint.classList.add('hidden');
   
   button.addEventListener('click', (e) => {
     e.preventDefault();
     const isExpanded = button.getAttribute('aria-expanded') === 'true';
     button.setAttribute('aria-expanded', !isExpanded);
     
-    // Toggle fa-angle-down/fa-angle-up classes
-    button.classList.toggle('fa-angle-down');
-    button.classList.toggle('fa-angle-up');
+    // Toggle fa-angle-down/fa-angle-up classes on the icon inside the button
+    const icon = button.querySelector('i');
+    icon.classList.toggle('fa-angle-down');
+    icon.classList.toggle('fa-angle-up');
     
-    // Toggle hidden class on target
+    // Toggle hidden class on both target and hint
     target.classList.toggle('hidden');
+    hint.classList.toggle('hidden');
   });
 }
 document.addEventListener('DOMContentLoaded', toggleCommunityGroups);
