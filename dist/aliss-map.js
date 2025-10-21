@@ -839,7 +839,8 @@ style.innerHTML = `
       }
       .aliss-map .aliss-map-location-type .location-type-item input[type="radio"] {
         margin-right: 8px;
-        width: auto;
+        width: 1.5rem;
+        height:1.5rem;
       }
       .aliss-map .aliss-map-location-type .location-type-item label {
         cursor: pointer;
