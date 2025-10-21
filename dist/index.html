@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://use.typekit.net/mzk4tpf.css">
   <script src="https://kit.fontawesome.com/b05dd168a1.js" crossorigin="anonymous"></script>
   <link href="/dist/main.css" rel="stylesheet">
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBaQiiWHE0SExspaEBocXLaj-0LbK_BCFA&libraries=places&v=weekly&callback=initMap&loading=async"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBd2IOC0hTdds5yllIOHwwi1d46sQ9zX2g&libraries=places&v=weekly&callback=initMap&loading=async"></script>
 </head>
 <body class="bg-white">
 <header class="bg-alissblue flex justify-start items-center h-[136px]">
@@ -35,6 +35,22 @@
           <input type="text" id="distance" name="distance" value="10" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
           <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
         </div>
+
+        <fieldset class="mt-2" id="filter-by-location_type">
+        <legend class="sr-only">Filter by coverage</legend>
+        <div class="flex flex-row-reverse justify-end mb-2">
+          <label for="LocationType2" class="text-base font-normal">Only show services based locally</label>
+          <input class="w-6 mr-2" type="radio" name="LocationType" id="LocationType2" value="local">
+        </div>
+        <div class="flex flex-row-reverse justify-end mb-2">
+          <label for="LocationType3" class="text-base font-normal">Only show national services acrtive in the area</label>
+          <input class="w-6 mr-2" type="radio" name="LocationType" id="LocationType3" value="national">
+        </div>
+        <div class="flex flex-row-reverse justify-end mb-2">
+          <label for="LocationType1" class="text-base font-normal">Show all services</label>
+          <input class="w-6 mr-2" type="radio" name="LocationType" id="LocationType1" value="" checked="">
+        </div>
+      </fieldset>
 
  
       </div>
@@ -133,6 +149,7 @@ let selectedCommunityGroups = [];
 let selectedPostcode = '';
 let selectedLatLng = [56.4907, -4.2026];
 let selectedSearchRadius = 10000;
+let selectedLocationType = '';
 
 
 // location input references
@@ -426,6 +443,12 @@ distanceInput.addEventListener('input', function() {
     updateDistance(this.value);
 });
 
+// Add event listener for location type radio buttons
+document.querySelectorAll('input[name="LocationType"]').forEach((radio) => {
+  radio.addEventListener('change', (e) => {
+    selectedLocationType = e.target.value;
+  });
+});
 
 
 // when preview button is clicked output the widget code
@@ -456,6 +479,7 @@ const outputWidgetCode = () => {
     defaultSearchRadius: selectedSearchRadius,
     categories: selectedAlissServices,
     communityGroups: selectedCommunityGroups,
+    locationType: selectedLocationType,
     pagination: paginationEnabled, // Add pagination flag
     itemsPerPage: itemsPerPageValue // Add items per page
   }
@@ -472,6 +496,7 @@ const outputWidgetCode = () => {
     defaultSearchRadius: ${selectedSearchRadius},
     categories: ${JSON.stringify(selectedAlissServices)},
     communityGroups: ${JSON.stringify(selectedCommunityGroups)},
+    locationType: '${selectedLocationType}',
     pagination: ${paginationEnabled},
     itemsPerPage: ${itemsPerPageValue}
   }<\/script>

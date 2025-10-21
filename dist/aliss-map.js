@@ -103,6 +103,9 @@ const getServices = async (baseurl) => {
   ? alissDefaults.communityGroups.join(';')
   : (alissDefaults.communityGroups || '').split(',').join(';');
 
+  // get the location_type from the config
+  const locationType = alissDefaults.locationType || '';
+
   // category might have multiple comma seperated valueds so we need to split them into an array, eg. food-and-nutrition, money
   const categoryArray = getSelectedCategory().split(',');
   // we can then loop through the categories and add all the services for each one to a services Map, we're using a map with id as the key so we can avoid duplication of services in the list
@@ -111,7 +114,7 @@ const getServices = async (baseurl) => {
   // Helper function to fetch all pages for a single category
   const fetchCategoryData = async (cat) => {
     let allServicesForCategory = [];
-    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&page_size=1000&radius=${radius}&format=json&source=customisable-map&page=`;
+    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&location_type=${locationType}&page_size=1000&radius=${radius}&format=json&source=customisable-map&page=`;
     let page = 1;
     let lastResult = [];
     
