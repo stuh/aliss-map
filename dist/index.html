@@ -140,7 +140,7 @@ const locationInput = document.querySelector('#aliss-location-search');
 const postCodeInputHidden = document.querySelector('#aliss-postcode');
 
 const getAlissServices = async () => {
-  const resp = await fetch(`${ALISS_API_URL}/categories/`);
+  const resp = await fetch(`${ALISS_API_URL}/categories/?source=customisable-map`);
   const data = await resp.json();
   return data.data;
 };
@@ -174,7 +174,7 @@ const addServicesToSelect = async () => {
 };
 
 const getAlissCommunityGroups = async () => {
-  const resp = await fetch(`${ALISS_API_URL}/community-groups/`);
+  const resp = await fetch(`${ALISS_API_URL}/community-groups/?source=customisable-map`);
   const data = await resp.json();
   return data.data;
 };
