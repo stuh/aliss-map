@@ -762,6 +762,10 @@ input[type="text"], input[type="number"], textarea {
   position: relative;
 }
 
+.sticky {
+  position: sticky;
+}
+
 .bottom-\[10px\] {
   bottom: 10px;
 }
@@ -774,13 +778,29 @@ input[type="text"], input[type="number"], textarea {
   top: 10px;
 }
 
+.right-0 {
+  right: 0px;
+}
+
+.top-0 {
+  top: 0px;
+}
+
+.bottom-0 {
+  bottom: 0px;
+}
+
+.z-10 {
+  z-index: 10;
+}
+
+.float-right {
+  float: right;
+}
+
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
-}
-
-.mb-2 {
-  margin-bottom: 0.5rem;
 }
 
 .mb-3 {
@@ -799,20 +819,12 @@ input[type="text"], input[type="number"], textarea {
   margin-left: 0.5rem;
 }
 
-.ml-4 {
-  margin-left: 1rem;
-}
-
 .ml-8 {
   margin-left: 2rem;
 }
 
 .mr-2 {
   margin-right: 0.5rem;
-}
-
-.mt-4 {
-  margin-top: 1rem;
 }
 
 .mt-5 {
@@ -829,6 +841,34 @@ input[type="text"], input[type="number"], textarea {
 
 .mt-\[17px\] {
   margin-top: 17px;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.ml-4 {
+  margin-left: 1rem;
+}
+
+.mt-3 {
+  margin-top: 0.75rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
 }
 
 .block {
@@ -851,6 +891,10 @@ input[type="text"], input[type="number"], textarea {
   display: none;
 }
 
+.h-5 {
+  height: 1.25rem;
+}
+
 .h-6 {
   height: 1.5rem;
 }
@@ -861,6 +905,14 @@ input[type="text"], input[type="number"], textarea {
 
 .max-h-\[50dvh\] {
   max-height: 50dvh;
+}
+
+.w-20 {
+  width: 5rem;
+}
+
+.w-5 {
+  width: 1.25rem;
 }
 
 .w-6 {
@@ -877,6 +929,26 @@ input[type="text"], input[type="number"], textarea {
 
 .w-full {
   width: 100%;
+}
+
+.w-8 {
+  width: 2rem;
+}
+
+.w-16 {
+  width: 4rem;
+}
+
+.w-10 {
+  width: 2.5rem;
+}
+
+.w-14 {
+  width: 3.5rem;
+}
+
+.w-4 {
+  width: 1rem;
 }
 
 .min-w-\[150px\] {
@@ -919,8 +991,24 @@ input[type="text"], input[type="number"], textarea {
   gap: 0.5rem;
 }
 
+.space-x-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(0.5rem * var(--tw-space-x-reverse));
+  margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+.space-x-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1rem * var(--tw-space-x-reverse));
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
 .overflow-auto {
   overflow: auto;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
 }
 
 .text-balance {
@@ -948,6 +1036,11 @@ input[type="text"], input[type="number"], textarea {
 .border-darkblue {
   --tw-border-opacity: 1;
   border-color: rgb(0 71 133 / var(--tw-border-opacity));
+}
+
+.border-grey {
+  --tw-border-opacity: 1;
+  border-color: rgb(75 91 104 / var(--tw-border-opacity));
 }
 
 .bg-alissblue {
@@ -987,6 +1080,10 @@ input[type="text"], input[type="number"], textarea {
   padding: 1.5rem;
 }
 
+.p-1 {
+  padding: 0.25rem;
+}
+
 .px-\[32px\] {
   padding-left: 32px;
   padding-right: 32px;
@@ -1015,6 +1112,11 @@ input[type="text"], input[type="number"], textarea {
 .py-\[35px\] {
   padding-top: 35px;
   padding-bottom: 35px;
+}
+
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 .pb-3 {
@@ -1063,6 +1165,10 @@ input[type="text"], input[type="number"], textarea {
   line-height: 1.5rem;
 }
 
+.text-\[1\.5rem\] {
+  font-size: 1.5rem;
+}
+
 .font-black {
   font-weight: 900;
 }
@@ -1093,6 +1199,10 @@ input[type="text"], input[type="number"], textarea {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
+.underline {
+  text-decoration-line: underline;
 }
 
 .blur {
@@ -1208,6 +1318,11 @@ input[type="text"], input[type="number"], textarea {
 .focus\:outline-none:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
+}
+
+.focus\:ring-darkblue:focus {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(0 71 133 / var(--tw-ring-opacity));
 }
 
 @media (min-width: 1024px) {

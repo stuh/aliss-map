@@ -103,6 +103,11 @@ const getServices = async (baseurl) => {
   ? alissDefaults.communityGroups.join(';')
   : (alissDefaults.communityGroups || '').split(',').join(';');
 
+  // get the serviceAreas from the config, if any exist then we need to replace the commas with semi colons
+  const serviceAreas = Array.isArray(alissDefaults.serviceAreas)
+  ? alissDefaults.serviceAreas.join(';')
+  : (alissDefaults.serviceAreas || '').split(',').join(';');
+
   // get the location_type from the config
   const locationType = alissDefaults.locationType || '';
 
@@ -114,7 +119,7 @@ const getServices = async (baseurl) => {
   // Helper function to fetch all pages for a single category
   const fetchCategoryData = async (cat) => {
     let allServicesForCategory = [];
-    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&location_type=${locationType}&page_size=1000&radius=${radius}&format=json&source=customisable-map&page=`;
+    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&service_areas=${serviceAreas}&location_type=${locationType}&page_size=1000&radius=${radius}&format=json&source=customisable-map&page=`;
     let page = 1;
     let lastResult = [];
     
