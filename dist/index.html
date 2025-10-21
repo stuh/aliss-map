@@ -29,11 +29,13 @@
         </div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
-        <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
-        <input class="block mb-4" type="range" id="slider" min="1" max="500" value="10" aria-describedby="aliss-location-hint">
-        <div class="relative">
-          <input type="text" id="distance" name="distance" value="10" class="w-full border lg:border-2 border-[#D9D9D9] p-2" aria-describedby="aliss-location-hint">
-          <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
+        <div id="distance-controls">
+          <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
+          <input class="w-full block mb-4" type="range" id="slider" min="1" max="500" value="10" aria-describedby="aliss-location-hint">
+          <div class="relative">
+            <input type="text" id="distance" name="distance" value="10" class="w-full border lg:border-2 border-[#D9D9D9] p-2" aria-describedby="aliss-location-hint">
+            <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
+          </div>
         </div>
 
         <fieldset class="mt-4" id="filter-by-location_type">
@@ -416,6 +418,14 @@ distanceInput.addEventListener('input', function() {
 document.querySelectorAll('input[name="LocationType"]').forEach((radio) => {
   radio.addEventListener('change', (e) => {
     selectedLocationType = e.target.value;
+    
+    // Hide distance controls when "national" is selected
+    const distanceControls = document.getElementById('distance-controls');
+    if (selectedLocationType === 'national') {
+      distanceControls.classList.add('hidden');
+    } else {
+      distanceControls.classList.remove('hidden');
+    }
   });
 });
 
