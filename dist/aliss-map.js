@@ -141,13 +141,13 @@ const getServices = async (baseurl) => {
     
     // Process all results and add to the servicesMap
     allCategoryResults.flat().forEach(service => {
-      const { name, gcfn, description, locations, url, phone, email, organisation, permalink, id } = service;
+      const { name, gcfn, description, locations, url, phone, email, organisation, permalink, id, referral_url } = service;
       // Calculate distance
       const distance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], locations[0]?.latitude || 0, locations[0]?.longitude || 0);
       
       // Only add if not already in the map
       if (!servicesMap.has(id)) {
-        servicesMap.set(id, { id, name, gcfn, description, locations, url, phone, email, organisation, distance, permalink });
+        servicesMap.set(id, { id, name, gcfn, description, locations, url, phone, email, organisation, distance, permalink, referral_url });
       }
     });
   } catch (err) {
@@ -334,6 +334,9 @@ const buildServiceCard = (service, locationOverride) => {
   }
   if (service.email) {
     linksHTML += `<a class="service-email" href="mailto:${service.email}" target="_blank">${service.email}</a>`;
+  }
+  if (service.referral_url) {
+    linksHTML += `<a class="service-referral" href="${service.referral_url}" target="_blank">Referral information</a>`;
   }
   linksHTML += '</div>';
   
@@ -900,6 +903,7 @@ style.innerHTML = `
       }
       .aliss-map .results-list .service-links{
         display:flex;
+        flex-wrap: wrap;
       }
       .aliss-map .results-list .service-card{
         position:relative;
