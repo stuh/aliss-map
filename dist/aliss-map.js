@@ -657,6 +657,24 @@ const buildLayout = (targetNode) => {
 
           <div class="output-message"></div>
 
+          <div class="aliss-map-location-type" style="display: none;">
+              <fieldset id="aliss-filter-by-location-type">
+                <legend class="sr-only">Filter by coverage</legend>
+                <div class="location-type-item">
+                  <input type="radio" name="aliss-location-type" id="aliss-location-local" value="local">
+                  <label for="aliss-location-local">Only show services based locally</label>
+                </div>
+                <div class="location-type-item">
+                  <input type="radio" name="aliss-location-type" id="aliss-location-national" value="national">
+                  <label for="aliss-location-national">Only show national services active in the area</label>
+                </div>
+                <div class="location-type-item">
+                  <input type="radio" name="aliss-location-type" id="aliss-location-all" value="" checked>
+                  <label for="aliss-location-all">Show all services</label>
+                </div>
+              </fieldset>
+          </div>
+
           <div class="aliss-map-categories">
               
           </div>
@@ -727,6 +745,29 @@ const buildCategoryRadioButtons = (categories) => {
 
 }
 
+// Function to show/hide and setup location type filters
+const setupLocationTypeFilter = () => {
+  const locationTypeDiv = document.querySelector('.aliss-map-location-type');
+  
+  // Only show location type filter if no locationType was configured (i.e., "Show all services" was selected)
+  if (!alissDefaults.locationType || alissDefaults.locationType === '') {
+    locationTypeDiv.style.display = 'block';
+    
+    // Add event listeners to the radio buttons
+    document.querySelectorAll('input[name="aliss-location-type"]').forEach((radio) => {
+      radio.addEventListener('change', (e) => {
+        // Update the alissDefaults with the selected value
+        alissDefaults.locationType = e.target.value;
+        // Trigger a new search
+        doSearch();
+      });
+    });
+  } else {
+    // Hide the filter if a specific locationType was configured
+    locationTypeDiv.style.display = 'none';
+  }
+}
+
 // include some css in a style tag in the head
 const style = document.createElement('style');
 style.innerHTML = `
@@ -786,6 +827,29 @@ style.innerHTML = `
         min-width: 150px;
         position: relative;
 
+      }
+      .aliss-map .aliss-map-location-type {
+        margin-bottom: 15px;
+      }
+      .aliss-map .aliss-map-location-type fieldset {
+        border: none;
+        padding: 0;
+        margin: 0;
+      }
+      .aliss-map .aliss-map-location-type .location-type-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .aliss-map .aliss-map-location-type .location-type-item input[type="radio"] {
+        margin-right: 8px;
+        width: auto;
+      }
+      .aliss-map .aliss-map-location-type .location-type-item label {
+        cursor: pointer;
+        margin: 0;
+        font-weight:normal;
+        font-size:1rem;
       }
       .aliss-map .aliss-map-categories{
         margin-bottom:10px;
@@ -1012,6 +1076,9 @@ const initALISSMap = () => {
 
   // now create the radio button filters and their listeners
   buildCategoryRadioButtons(alissDefaults.categories);
+
+  // Setup location type filter (only shows if no locationType was configured)
+  setupLocationTypeFilter();
 
   // we're ready, do the search
   doSearch();
