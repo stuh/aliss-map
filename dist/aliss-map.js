@@ -365,12 +365,12 @@ const buildResultsList = (services) => {
     paginationContainer.remove();
   }
 
-  // Check if pagination is enabled and there are enough items to paginate
-  const paginationEnabled = alissDefaults.pagination;
-  const itemsPerPage = alissDefaults.itemsPerPage;
+  // Automatic pagination: only activate when more than 6 results
+  const itemsPerPage = 6;
+  const paginationEnabled = services.length > 6;
   
-  // Toggle the 'paginate' class based on whether pagination is enabled and needed
-  if (paginationEnabled && itemsPerPage > 0 && services.length > itemsPerPage) {
+  // Toggle the 'paginate' class based on whether pagination is needed
+  if (paginationEnabled) {
     results_list.classList.add('paginate');
   } else {
     results_list.classList.remove('paginate');
@@ -378,7 +378,7 @@ const buildResultsList = (services) => {
   
   let servicesToShow = services;
 
-  if (paginationEnabled && itemsPerPage > 0 && services.length > itemsPerPage) {
+  if (paginationEnabled) {
     const totalPages = Math.ceil(services.length / itemsPerPage);
     // Ensure currentPage is within valid range
     currentPage = Math.max(1, Math.min(currentPage, totalPages));
@@ -390,7 +390,7 @@ const buildResultsList = (services) => {
     // Build pagination controls
     buildPaginationControls(totalPages, services);
   } else {
-    // If pagination is disabled or not needed, show all services
+    // If pagination is not needed, show all services
     servicesToShow = services;
   }
 
