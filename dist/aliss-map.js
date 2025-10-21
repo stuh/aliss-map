@@ -244,30 +244,32 @@ const addMarkersToMap = async (services) => {
 // Update the total count display
   document.getElementById('aliss-totals').textContent = `${services.length} services nearest to you or available in your region.`;
 
-// set the bounds of the map and add make the map fit the bounds 
-// If we have valid coordinates, fit the map to show all markers
+  // First, auto-fit the map to show all the pins
   if (validLatLngs.length > 0) {
     const bounds = L.latLngBounds(validLatLngs);
-    map.fitBounds(bounds, {
-      padding: [20, 20]
-    });
-
-
-    // Set minimum zoom to current zoom level after fitting bounds
-    setTimeout(() => {
-      const currentZoom = map.getZoom();
-      map.setMinZoom(currentZoom);
-    }, 100);  
-    // Enable zoom in only
-    map.scrollWheelZoom.enable();
-    map.touchZoom.enable();
-
-    // Disable dragging
-    // map.dragging.disable();
-    
-    // Set max bounds to prevent panning outside marker area
-    map.setMaxBounds(bounds.pad(1));
+    map.fitBounds(bounds, { padding: [50, 50] });
+  } else {
+    // If no valid markers, show Scotland view
+    map.setView([56.4907, -4.2026], 6);
   }
+  
+  // AFTER the initial fit, set minimum zoom and bounds restrictions
+  // Southwest and Northeast corners of Scotland
+  const scotlandBounds = L.latLngBounds(
+    [54.5, -8.5],  // Southwest corner
+    [60.8, 0.5]    // Northeast corner
+  );
+  
+  // Set minimum zoom to keep Scotland visible (approximately zoom level 6)
+  map.setMinZoom(6);
+  
+  // Set max bounds to Scotland area (with some padding)
+  map.setMaxBounds(scotlandBounds);
+  
+  // Enable zoom and dragging
+  map.scrollWheelZoom.enable();
+  map.touchZoom.enable();
+  map.dragging.enable();
 }
 
 // this builds the html for a service to be used in both the map popup and list, keeps it the same.
