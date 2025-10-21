@@ -863,6 +863,11 @@ style.innerHTML = `
         margin-right: 15px;
         white-space: nowrap; 
       }
+      .aliss-map .aliss-map-categories .category-item input[type="radio"]{
+        width:1.5rem;
+        height:1.5rem;
+      }
+        
       .aliss-map .aliss-map-categories label{
         padding:0 0 0 5px;
         cursor: pointer; 
