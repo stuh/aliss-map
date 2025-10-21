@@ -24,7 +24,7 @@
         <label for="aliss-location-search" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
         <p class="pb-3" id="aliss-location-search-hint">Enter the postcode or region you want to center the map on.</p>
         <div class="relative">
-          <input type="text" id="aliss-location-search" aria-describedby="aliss-location-search-hint" name="aliss-location-search" value="" class="w-full border border-grey p-2 bg-lightgrey">
+          <input type="text" id="aliss-location-search" aria-describedby="aliss-location-search-hint" name="aliss-location-search" value="" class="w-full border lg:border-2 border-[#D9D9D9] p-2 ">
           <input type="hidden" id="aliss-postcode"  name="aliss-postcode" value="" >
         </div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
@@ -32,18 +32,18 @@
         <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
         <input class="block mb-4" type="range" id="slider" min="1" max="500" value="10" aria-describedby="aliss-location-hint">
         <div class="relative">
-          <input type="text" id="distance" name="distance" value="10" class="w-full border border-grey p-2 bg-lightgrey" aria-describedby="aliss-location-hint">
+          <input type="text" id="distance" name="distance" value="10" class="w-full border lg:border-2 border-[#D9D9D9] p-2" aria-describedby="aliss-location-hint">
           <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
         </div>
 
-        <fieldset class="mt-2" id="filter-by-location_type">
+        <fieldset class="mt-4" id="filter-by-location_type">
         <legend class="sr-only">Filter by coverage</legend>
         <div class="flex flex-row-reverse justify-end mb-2">
           <label for="LocationType2" class="text-base font-normal">Only show services based locally</label>
           <input class="w-6 mr-2" type="radio" name="LocationType" id="LocationType2" value="local">
         </div>
         <div class="flex flex-row-reverse justify-end mb-2">
-          <label for="LocationType3" class="text-base font-normal">Only show national services acrtive in the area</label>
+          <label for="LocationType3" class="text-base font-normal">Only show national services active in the area</label>
           <input class="w-6 mr-2" type="radio" name="LocationType" id="LocationType3" value="national">
         </div>
         <div class="flex flex-row-reverse justify-end mb-2">
@@ -58,7 +58,7 @@
         <label for="aliss-services" class="text-darkblue font-black heading1 pb-3">Step 2: Category Selection</label>
         <p class="pb-3" >Select the types of services you want to include on your map.</p>
         
-        <div id="aliss-services" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto">
+        <div id="aliss-services" class="border lg:border-2 border-[#D9D9D9] p-2 bg-lightgrey max-h-[50dvh] overflow-auto">
         </div>
       </div>
      
@@ -86,7 +86,7 @@
       <div class="mt-8">
         <label for="widget-output" class="text-darkblue font-black heading1 pb-3 block">Step 4: Code</label>
         <p class="pb-3" id="aliss-widget-output-hint">Copy the code below to be added to your site.</p>
-        <textarea id="widget-output" aria-describedby="aliss-widget-output-hint" rows="12" class="w-full border border-grey bg-lightgrey" readonly="readonly"></textarea>
+        <textarea id="widget-output" aria-describedby="aliss-widget-output-hint" rows="12" class="w-full border lg:border-2 border-[#D9D9D9] bg-lightgrey" readonly="readonly"></textarea>
         <button id="copy-code" class="text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Copy the code</button>
         <span id="copyMessage" class="hidden ">Copied Successfully!</span>
       </div>
@@ -217,7 +217,7 @@ const createCheckboxListFromJSON = (data, level = 1, targetdiv, subCategoryProp 
         return '';
     }
 
-    let html = `<ul class="ml-8 pt-2 ${level == 1 ? '' : 'hidden'}" id="${targetdiv}" role="group" aria-level="${level}">`;
+    let html = `<ul class="ml-4 pt-2 ${level == 1 ? '' : 'hidden'}" id="${targetdiv}" role="group" aria-level="${level}">`;
     
     data.forEach(item => {
         const hasSubCategories = item[subCategoryProp] && item[subCategoryProp].length > 0;
