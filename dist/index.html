@@ -10,11 +10,12 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBd2IOC0hTdds5yllIOHwwi1d46sQ9zX2g&libraries=places&v=weekly&callback=initMap&loading=async"></script>
 </head>
 <body class="bg-white">
+<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-yellow focus:text-almostblack focus:p-4 focus:underline">Skip to main content</a>
 <header class="bg-alissblue flex justify-start items-center h-[136px]">
 <img src="https://www.aliss.org/ALISS.THEME/dist/img/aliss-logo.png" class="w-[96px]" alt="A Local Information System for Scotland (ALISS) logo">
 <span class="text-white text-2xl text-balance w-[250px]">A Local Information System for Scotland</span>
 </header>
-<main class="container p-10 mx-auto">
+<main id="main-content" class="container p-10 mx-auto">
   
   <div class="lg:flex lg:justify-between">
     <div class="lg:w-5/12">
@@ -30,11 +31,12 @@
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
 
         <div id="distance-controls">
-          <p class="block py-4" id="aliss-location-hint">How far from the location would you like to show services? </p>
-          <input class="w-full block mb-4" type="range" id="slider" min="1" max="500" value="10" aria-describedby="aliss-location-hint">
+          <label for="slider" class="block py-4" id="aliss-location-hint text-base">How far from the location would you like to show services? </label>
+          <input class="w-full block mb-4" type="range" id="slider" min="1" max="500" value="10" aria-describedby="aliss-location-hint" aria-valuemin="1" aria-valuemax="500" aria-valuenow="10" aria-valuetext="10 kilometers">
           <div class="relative">
-            <input type="text" id="distance" name="distance" value="10" class="w-full border lg:border-2 border-[#D9D9D9] p-2" aria-describedby="aliss-location-hint">
-            <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey">km</span>  
+            <label for="distance" class="sr-only">Distance in kilometers</label>
+            <input type="text" id="distance" name="distance" value="10" class="w-full border lg:border-2 border-[#D9D9D9] p-2" aria-describedby="aliss-location-hint" aria-label="Distance in kilometers">
+            <span class="absolute right-[10px] bottom-[10px] text-[18px] text-grey" aria-hidden="true">km</span>  
           </div>
         </div>
 
@@ -73,7 +75,7 @@
                 ><label for="aliss-communitygroups" class="text-almostblack font-black heading2 pb-3 cursor-pointer">Select who categories (optional) <i class="text-darkblue fas fa-angle-down"></i> </button></label>
         
         <p class="mb-4 hidden" id="aliss-communitygroups-hint">Select “Who” categories to refine services for specific groups of people. Selecting a who category will show services which have both the service category and who category selected.</p>
-        <div id="aliss-communitygroups" class="border border-grey p-2 bg-lightgrey max-h-[50dvh] overflow-auto hidden">
+        <div id="aliss-communitygroups" class="border lg:border-2 border-[#D9D9D9] p-2 bg-lightgrey max-h-[50dvh] overflow-auto hidden">
         </div>
       </div>
      
@@ -90,7 +92,7 @@
         <p class="pb-3" id="aliss-widget-output-hint">Copy the code below to be added to your site.</p>
         <textarea id="widget-output" aria-describedby="aliss-widget-output-hint" rows="12" class="w-full border lg:border-2 border-[#D9D9D9] bg-lightgrey" readonly="readonly"></textarea>
         <button id="copy-code" class="text-[20px] font-bold min-w-[150px] px-[32px] py-[16px] mt-5 border-2 border-darkblue bg-darkblue text-white hover:bg-almostblack hover:border-almostblack focus:text-almostblack focus:bg-yellow focus:border-almostblack focus:outline-none">Copy the code</button>
-        <span id="copyMessage" class="hidden ">Copied Successfully!</span>
+        <span id="copyMessage" class="hidden" role="status" aria-live="polite">Copied Successfully!</span>
       </div>
 
       <div class="bg-lightgrey p-6 mt-8">
@@ -390,7 +392,7 @@ const distanceInput = document.getElementById('distance');
 
 // Function to update the value of alissDistance and keep elements in sync
 function updateDistance(value) {
-    // Ensure the value is between 1 and 100
+    // Ensure the value is between 1 and 500
     value = Math.min(Math.max(value, 1), 500);
 
     // Update alissDistance
@@ -399,6 +401,10 @@ function updateDistance(value) {
     // Update the slider and input box values
     slider.value = value;
     distanceInput.value = value;
+    
+    // Update ARIA attributes for accessibility
+    slider.setAttribute('aria-valuenow', value);
+    slider.setAttribute('aria-valuetext', `${value} kilometers`);
 
     // outputWidgetCode();
 

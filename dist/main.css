@@ -1224,6 +1224,33 @@ input[type="text"], input[type="number"], textarea {
   background-color: rgb(33 33 33 / var(--tw-bg-opacity));
 }
 
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+.focus\:absolute:focus {
+  position: absolute;
+}
+
+.focus\:left-2:focus {
+  left: 0.5rem;
+}
+
+.focus\:top-2:focus {
+  top: 0.5rem;
+}
+
+.focus\:z-50:focus {
+  z-index: 50;
+}
+
 .focus\:border-almostblack:focus {
   --tw-border-opacity: 1;
   border-color: rgb(33 33 33 / var(--tw-border-opacity));
@@ -1234,9 +1261,17 @@ input[type="text"], input[type="number"], textarea {
   background-color: rgb(253 213 34 / var(--tw-bg-opacity));
 }
 
+.focus\:p-4:focus {
+  padding: 1rem;
+}
+
 .focus\:text-almostblack:focus {
   --tw-text-opacity: 1;
   color: rgb(33 33 33 / var(--tw-text-opacity));
+}
+
+.focus\:underline:focus {
+  text-decoration-line: underline;
 }
 
 .focus\:outline-none:focus {
