@@ -242,12 +242,7 @@ const addMarkersToMap = async (services) => {
   console.log(`Added ${totalMarkers} markers in ${(endTime - startTime).toFixed(2)}ms`);
 
 // Update the total count display
-if (getPostCode()) {
-  document.getElementById('aliss-totals').textContent = `${services.length} services found at ${validLatLngs.length} locations within ${alissDefaults.defaultSearchRadius/1000}km of ${getPostCode()}`;
-  
-} else {
-  document.getElementById('aliss-totals').textContent = `${services.length} services found`;
-}
+  document.getElementById('aliss-totals').textContent = `${services.length} services nearest to you or available in your region.`;
 
 // set the bounds of the map and add make the map fit the bounds 
 // If we have valid coordinates, fit the map to show all markers
@@ -682,7 +677,8 @@ const buildLayout = (targetNode) => {
           <div class="map-holder">
               <div id="map"></div>
           </div>
-          <h3 id="aliss-totals" style="margin:20px 0;"></h3>
+          <h3 id="aliss-totals"></h3>
+          <p>Only services with an address will show on the map. All services are listed in the results.</p>
           <div class="results-list"></div>
       `;
 
@@ -869,6 +865,13 @@ style.innerHTML = `
         cursor: pointer; 
       }
 
+      .aliss-map #aliss-totals{
+        margin-top:15px;
+        margin-bottom:5px;
+        font-weight:bold;
+        font-size:1.1rem;
+      }
+
       .aliss-map h3.service-title{
         margin-bottom:0;
       }
@@ -907,7 +910,6 @@ style.innerHTML = `
         position:relative;
         margin-bottom:40px;
         margin-top:40px;
-        padding:20px;
 
       }
       .aliss-map .results-list .service-distance{
