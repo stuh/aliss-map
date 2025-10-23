@@ -498,9 +498,49 @@ function toggleRegions() {
     const isExpanded = button.getAttribute('aria-expanded') === 'true';
     button.setAttribute('aria-expanded', !isExpanded);
     
+    // Get location search and distance controls elements
+    const locationSearchWrapper = document.querySelector('.relative:has(#aliss-location-search)');
+    const locationSearchInput = document.getElementById('aliss-location-search');
+    const postCodeInputHidden = document.getElementById('aliss-postcode');
+    const distanceControls = document.getElementById('distance-controls');
+    const errorMessage = document.querySelector('.po_error');
+    
     // If closing the list, clear all selections to revert to default state
     if (isExpanded) {
       clearRegionSelections();
+      // Show location search and distance controls when closing regions
+      if (locationSearchWrapper) {
+        locationSearchWrapper.style.display = '';
+      }
+      if (errorMessage) {
+        errorMessage.style.display = '';
+      }
+      if (distanceControls) {
+        distanceControls.style.display = '';
+      }
+      // Restore default postcode and latlng
+      selectedPostcode = '';
+      selectedLatLng = [56.4907, -4.2026];
+    } else {
+      // Hide location search and distance controls when opening regions
+      if (locationSearchWrapper) {
+        locationSearchWrapper.style.display = 'none';
+      }
+      if (errorMessage) {
+        errorMessage.style.display = 'none';
+      }
+      if (distanceControls) {
+        distanceControls.style.display = 'none';
+      }
+      // Clear postcode and latlng when opening regions
+      selectedPostcode = '';
+      selectedLatLng = [56.4907, -4.2026];
+      if (locationSearchInput) {
+        locationSearchInput.value = '';
+      }
+      if (postCodeInputHidden) {
+        postCodeInputHidden.value = '';
+      }
     }
     
     // Toggle hidden class on target
@@ -530,6 +570,16 @@ function addRegionListCloseIcon() {
     toggleButton.setAttribute('aria-expanded', 'false');
     closeIcon.classList.add('hidden');
     closeIcon.classList.remove('block');
+    
+    // Show location search and distance controls when closing regions
+    const locationSearchWrapper = document.querySelector('.relative:has(#aliss-location-search)');
+    const distanceControls = document.getElementById('distance-controls');
+    if (locationSearchWrapper) {
+      locationSearchWrapper.style.display = '';
+    }
+    if (distanceControls) {
+      distanceControls.style.display = '';
+    }
   });
   
   // Handle keyboard (Enter/Space) to close
@@ -544,6 +594,16 @@ function addRegionListCloseIcon() {
       closeIcon.classList.add('hidden');
       closeIcon.classList.remove('block');
       toggleButton.focus();
+      
+      // Show location search and distance controls when closing regions
+      const locationSearchWrapper = document.querySelector('.relative:has(#aliss-location-search)');
+      const distanceControls = document.getElementById('distance-controls');
+      if (locationSearchWrapper) {
+        locationSearchWrapper.style.display = '';
+      }
+      if (distanceControls) {
+        distanceControls.style.display = '';
+      }
     }
   });
   
@@ -765,6 +825,27 @@ addRegionsToSelect()
       console.log("No geometry available for this place");
       return;
     }
+    
+    // Close region selector and clear selections when a location is selected
+    const regionList = document.getElementById('aliss-regions');
+    const toggleButton = document.querySelector('button[aria-controls="aliss-regions"]');
+    const locationSearchWrapper = document.querySelector('.relative:has(#aliss-location-search)');
+    const distanceControls = document.getElementById('distance-controls');
+    
+    if (regionList && !regionList.classList.contains('hidden')) {
+      clearRegionSelections();
+      regionList.classList.add('hidden');
+      if (toggleButton) {
+        toggleButton.setAttribute('aria-expanded', 'false');
+      }
+      // Show location search and distance controls
+      if (locationSearchWrapper) {
+        locationSearchWrapper.style.display = '';
+      }
+      if (distanceControls) {
+        distanceControls.style.display = '';
+      }
+    }
 
     // get the lat and lng from the place but first check for any exceptions in rare cases we cannot get a postcode from the API
     const addressLower = place.formatted_address.toLowerCase();
@@ -916,6 +997,18 @@ clearIcon.addEventListener('click', () => {
   locationInput.focus();
   clearIcon.classList.add('hidden');
   clearIcon.classList.remove('block');
+  
+  // Close region selector and clear selections when location input is cleared
+  const regionList = document.getElementById('aliss-regions');
+  const toggleButton = document.querySelector('button[aria-controls="aliss-regions"]');
+  if (regionList && !regionList.classList.contains('hidden')) {
+    clearRegionSelections();
+    regionList.classList.add('hidden');
+    if (toggleButton) {
+      toggleButton.setAttribute('aria-expanded', 'false');
+    }
+  }
+  
   // trigger the change event on the postcode input
   // const event = new Event('change');
   // locationInput.dispatchEvent(event);

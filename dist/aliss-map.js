@@ -18,6 +18,16 @@ const doPostCodeSearch = () => {
   output_msg.textContent = '';
   postcode_field.classList.remove('search-error');
 
+  // If serviceAreas are configured, skip postcode validation
+  const hasServiceAreas = alissDefaults.serviceAreas && 
+                          (Array.isArray(alissDefaults.serviceAreas) ? alissDefaults.serviceAreas.length > 0 : alissDefaults.serviceAreas !== '');
+  
+  if (hasServiceAreas) {
+    // Service areas are configured, postcode is not required
+    doSearch();
+    return;
+  }
+
   // the postcoe regex
   rePostCode = /^(([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2}))$/;
 
