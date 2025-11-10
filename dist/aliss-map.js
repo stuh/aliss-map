@@ -18,6 +18,16 @@ const doPostCodeSearch = () => {
   output_msg.textContent = '';
   postcode_field.classList.remove('search-error');
 
+  // If serviceAreas are configured, skip postcode validation
+  const hasServiceAreas = alissDefaults.serviceAreas && 
+                          (Array.isArray(alissDefaults.serviceAreas) ? alissDefaults.serviceAreas.length > 0 : alissDefaults.serviceAreas !== '');
+  
+  if (hasServiceAreas) {
+    // Service areas are configured, postcode is not required
+    doSearch();
+    return;
+  }
+
   // the postcoe regex
   rePostCode = /^(([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2}))$/;
 
@@ -103,6 +113,11 @@ const getServices = async (baseurl) => {
   ? alissDefaults.communityGroups.join(';')
   : (alissDefaults.communityGroups || '').split(',').join(';');
 
+  // get the serviceAreas from the config, if any exist then we need to replace the commas with semi colons
+  const serviceAreas = Array.isArray(alissDefaults.serviceAreas)
+  ? alissDefaults.serviceAreas.join(';')
+  : (alissDefaults.serviceAreas || '').split(',').join(';');
+
   // get the location_type from the config
   const locationType = alissDefaults.locationType || '';
 
@@ -114,7 +129,7 @@ const getServices = async (baseurl) => {
   // Helper function to fetch all pages for a single category
   const fetchCategoryData = async (cat) => {
     let allServicesForCategory = [];
-    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&location_type=${locationType}&page_size=1000&radius=${radius}&format=json&source=customisable-map&page=`;
+    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&service_areas=${serviceAreas}&location_type=${locationType}&page_size=1000&radius=${radius}&format=json&source=customisable-map&page=`;
     let page = 1;
     let lastResult = [];
     

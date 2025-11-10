@@ -23,12 +23,27 @@
         <h1 class="pb-7">Create your ALISS map</h1>
         <p class="text-[18px] pb-7">Follow the steps below to create your customised ALISS map.</p>
         <label for="aliss-location-search" class="text-darkblue font-black heading1 pb-3">Step 1: Location</label>
-        <p class="pb-3" id="aliss-location-search-hint">Enter the postcode or region you want to center the map on.</p>
+        <p class="pb-3" id="aliss-location-search-hint">Which area(s) should your map include?<br>Enter a postcode or region to select services in a specific location</p>
         <div class="relative">
           <input type="text" id="aliss-location-search" aria-describedby="aliss-location-search-hint" name="aliss-location-search" value="" class="w-full border lg:border-2 border-[#D9D9D9] p-2 ">
           <input type="hidden" id="aliss-postcode"  name="aliss-postcode" value="" >
         </div>
         <p class="po_error hidden text-white bg-red p-2" aria-live="assertive"></p>
+
+        <div class="mt-1">
+          <div class="relative mb-3">
+            <button class="text-darkblue text-[16px] text-left cursor-pointer" 
+                        aria-controls="aliss-regions"
+                        aria-label="Expand region selector"
+                        aria-expanded="false"
+                        data-target="#aliss-regions"
+                    ><span class="underline">Or select from the region list</span></button>
+          </div>
+          
+          <div id="aliss-regions" class="relative border lg:border-2 border-[#D9D9D9] p-2 bg-lightgrey max-h-[50dvh] overflow-auto hidden">
+            <button id="clear-regions" class="sticky bottom-0 right-0 float-right bg-lightgrey text-darkblue text-[16px] underline cursor-pointer px-2 py-1" aria-label="Clear all selected regions">Clear</button>
+          </div>
+        </div>
 
         <div id="distance-controls">
           <label for="slider" class="block py-4 text-base" id="aliss-location-hint">How far from the location would you like to show services? </label>
@@ -117,7 +132,8 @@
                 defaultLatLng: [56.4907, -4.2026],
                 defaultSearchRadius: 10000,
                 categories: [],
-                communityGroups: []
+                communityGroups: [],
+                serviceAreas: []
             }
             </script>
         </div>
@@ -139,6 +155,7 @@ const ALISS_API_URL = 'https://www.aliss.org/api/v5';
 
 let selectedAlissServices = [];
 let selectedCommunityGroups = [];
+let selectedRegions = [];
 let selectedPostcode = '';
 let selectedLatLng = [56.4907, -4.2026];
 let selectedSearchRadius = 10000;
@@ -159,8 +176,11 @@ const addServicesToSelect = async () => {
   try {
     const data = await getAlissServices();
 
+    // Sort categories alphabetically by name
+    const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+
     // Generate the HTML for the checkbox list
-    const checkboxListHtml = createCheckboxListFromJSON(data, 1, 'services-div', 'sub_categories');
+    const checkboxListHtml = createCheckboxListFromJSON(sortedData, 1, 'services-div', 'sub_categories');
   
     // Insert the generated HTML into the DOM (for example, inside a div with id "category-list")
     document.getElementById('aliss-services').innerHTML = checkboxListHtml;
@@ -193,8 +213,11 @@ const addCommunityGroupsToSelect = async () => {
   try {
     const data = await getAlissCommunityGroups();
 
+    // Sort community groups alphabetically by name
+    const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+
     // Generate the HTML for the checkbox list
-    const checkboxListHtml = createCheckboxListFromJSON(data, 1, 'community-groups-div', 'sub_communitygroups');
+    const checkboxListHtml = createCheckboxListFromJSON(sortedData, 1, 'community-groups-div', 'sub_communitygroups');
     // Insert the generated HTML into the DOM (for example, inside a div with id "category-list")
     document.getElementById('aliss-communitygroups').innerHTML = checkboxListHtml;
     
@@ -216,14 +239,101 @@ const addCommunityGroupsToSelect = async () => {
   }
 };
 
+const getAlissRegions = async () => {
+  const resp = await fetch(`${ALISS_API_URL}/service-areas/?source=customisable-map`);
+  const data = await resp.json();
+  return data.data;
+};
+
+const buildRegionHierarchy = (regions) => {
+  // First, separate parent regions from wards
+  const parentRegions = regions.filter(region => !region.parent_id);
+  const wards = regions.filter(region => region.parent_id);
+  
+  // Create a map of parent regions with their wards
+  const regionMap = {};
+  parentRegions.forEach(region => {
+    regionMap[region.id] = {
+      ...region,
+      sub_regions: []
+    };
+  });
+  
+  // Add wards to their parent regions
+  wards.forEach(ward => {
+    if (regionMap[ward.parent_id]) {
+      regionMap[ward.parent_id].sub_regions.push(ward);
+    }
+  });
+  
+  // Sort wards alphabetically within each region
+  Object.values(regionMap).forEach(region => {
+    if (region.sub_regions && region.sub_regions.length > 0) {
+      region.sub_regions.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  });
+  
+  // Convert back to array and sort
+  return Object.values(regionMap).sort((a, b) => a.name.localeCompare(b.name));
+};
+
+const addRegionsToSelect = async () => {
+  try {
+    const data = await getAlissRegions();
+    const hierarchicalData = buildRegionHierarchy(data);
+
+    // Generate the HTML for the checkbox list
+    const checkboxListHtml = createCheckboxListFromJSON(hierarchicalData, 1, 'regions-div', 'sub_regions');
+    // Insert the generated HTML into the DOM
+    document.getElementById('aliss-regions').innerHTML = checkboxListHtml;
+    
+    // Re-add the Clear button after innerHTML replacement
+    const clearButton = document.createElement('button');
+    clearButton.id = 'clear-regions';
+    clearButton.className = 'sticky bottom-0 right-0 float-right bg-lightgrey text-darkblue text-[16px] underline cursor-pointer px-2 py-1';
+    clearButton.setAttribute('aria-label', 'Clear all selected regions');
+    clearButton.textContent = 'Clear';
+    document.getElementById('aliss-regions').appendChild(clearButton);
+    
+    // Add the close icon after the content has been loaded
+    addRegionListCloseIcon();
+    
+    // Add event listener for the Clear button
+    clearButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Use the helper function to clear selections
+      clearRegionSelections();
+    });
+    
+    // add a listener to the checkboxes, when they are clicked, update the selectedRegions array
+    document.querySelectorAll('#regions-div input[type="checkbox"]').forEach((checkbox) => {
+      checkbox.addEventListener('change', (e) => {
+        const region = e.target.value;
+        if (e.target.checked) {
+          selectedRegions.push(region);
+        } else {
+          selectedRegions = selectedRegions.filter((item) => item !== region);
+        }
+        // outputWidgetCode();
+      });
+    });
+    
+  } catch (err) {
+    console.error(`Oops, something is wrong ${err}`);
+  }
+};
+
 const createCheckboxListFromJSON = (data, level = 1, targetdiv, subCategoryProp = 'sub_categories') => {
     if (!data || data.length === 0) {
         return '';
     }
 
+    // Sort data alphabetically by name for consistent ordering
+    const sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
+
     let html = `<ul class="ml-4 pt-2 ${level == 1 ? '' : 'hidden'}" id="${targetdiv}" role="group" aria-level="${level}">`;
     
-    data.forEach(item => {
+    sortedData.forEach(item => {
         const hasSubCategories = item[subCategoryProp] && item[subCategoryProp].length > 0;
         const toggleId = `toggle-${item.slug}`;
         const ariaExpanded = hasSubCategories ? 'false' : '';
@@ -384,7 +494,154 @@ function toggleCommunityGroups() {
     hint.classList.toggle('hidden');
   });
 }
+
+// Helper function to clear all region selections and revert to default state
+function clearRegionSelections() {
+  // Uncheck all region checkboxes
+  document.querySelectorAll('#regions-div input[type="checkbox"]').forEach((checkbox) => {
+    checkbox.checked = false;
+  });
+  // Clear the selectedRegions array
+  selectedRegions = [];
+}
+
+function toggleRegions() {
+  const button = document.querySelector('button[aria-controls="aliss-regions"]');
+  const target = document.getElementById('aliss-regions');
+  
+  button.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+    button.setAttribute('aria-expanded', !isExpanded);
+    
+    // Get location search and distance controls elements
+    const locationSearchWrapper = document.querySelector('.relative:has(#aliss-location-search)');
+    const locationSearchInput = document.getElementById('aliss-location-search');
+    const postCodeInputHidden = document.getElementById('aliss-postcode');
+    const distanceControls = document.getElementById('distance-controls');
+    const errorMessage = document.querySelector('.po_error');
+    
+    // If closing the list, clear all selections to revert to default state
+    if (isExpanded) {
+      clearRegionSelections();
+      // Show location search and distance controls when closing regions
+      if (locationSearchWrapper) {
+        locationSearchWrapper.style.display = '';
+      }
+      if (errorMessage) {
+        errorMessage.style.display = '';
+      }
+      if (distanceControls) {
+        distanceControls.style.display = '';
+      }
+      // Restore default postcode and latlng
+      selectedPostcode = '';
+      selectedLatLng = [56.4907, -4.2026];
+    } else {
+      // Hide location search and distance controls when opening regions
+      if (locationSearchWrapper) {
+        locationSearchWrapper.style.display = 'none';
+      }
+      if (errorMessage) {
+        errorMessage.style.display = 'none';
+      }
+      if (distanceControls) {
+        distanceControls.style.display = 'none';
+      }
+      // Clear postcode and latlng when opening regions
+      selectedPostcode = '';
+      selectedLatLng = [56.4907, -4.2026];
+      if (locationSearchInput) {
+        locationSearchInput.value = '';
+      }
+      if (postCodeInputHidden) {
+        postCodeInputHidden.value = '';
+      }
+    }
+    
+    // Toggle hidden class on target
+    target.classList.toggle('hidden');
+  });
+}
+
+// Add a close icon next to the region list toggle button
+function addRegionListCloseIcon() {
+  const toggleButton = document.querySelector('button[aria-controls="aliss-regions"]');
+  const regionList = document.getElementById('aliss-regions');
+  const buttonWrapper = toggleButton.parentElement;
+  
+  // Create close icon matching the location input clear button
+  const closeIcon = document.createElement('i');
+  closeIcon.classList.add('fas', 'fa-square-xmark', 'absolute', 'right-0', 'top-0', 'hidden', 'text-darkblue', 'cursor-pointer', 'text-[1.8rem]');
+  closeIcon.setAttribute('aria-label', 'Close region list');
+  closeIcon.setAttribute('role', 'button');
+  closeIcon.setAttribute('tabindex', '0');
+  
+  // Handle click to close
+  closeIcon.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // Clear all region selections when closing
+    clearRegionSelections();
+    regionList.classList.add('hidden');
+    toggleButton.setAttribute('aria-expanded', 'false');
+    closeIcon.classList.add('hidden');
+    closeIcon.classList.remove('block');
+    
+    // Show location search and distance controls when closing regions
+    const locationSearchWrapper = document.querySelector('.relative:has(#aliss-location-search)');
+    const distanceControls = document.getElementById('distance-controls');
+    if (locationSearchWrapper) {
+      locationSearchWrapper.style.display = '';
+    }
+    if (distanceControls) {
+      distanceControls.style.display = '';
+    }
+  });
+  
+  // Handle keyboard (Enter/Space) to close
+  closeIcon.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      // Clear all region selections when closing
+      clearRegionSelections();
+      regionList.classList.add('hidden');
+      toggleButton.setAttribute('aria-expanded', 'false');
+      closeIcon.classList.add('hidden');
+      closeIcon.classList.remove('block');
+      toggleButton.focus();
+      
+      // Show location search and distance controls when closing regions
+      const locationSearchWrapper = document.querySelector('.relative:has(#aliss-location-search)');
+      const distanceControls = document.getElementById('distance-controls');
+      if (locationSearchWrapper) {
+        locationSearchWrapper.style.display = '';
+      }
+      if (distanceControls) {
+        distanceControls.style.display = '';
+      }
+    }
+  });
+  
+  // Insert close icon after the button in the wrapper
+  buttonWrapper.appendChild(closeIcon);
+  
+  // Show/hide the close icon based on region list visibility
+  const observer = new MutationObserver(() => {
+    if (regionList.classList.contains('hidden')) {
+      closeIcon.classList.add('hidden');
+      closeIcon.classList.remove('block');
+    } else {
+      closeIcon.classList.remove('hidden');
+      closeIcon.classList.add('block');
+    }
+  });
+  
+  observer.observe(regionList, { attributes: true, attributeFilter: ['class'] });
+}
+
 document.addEventListener('DOMContentLoaded', toggleCommunityGroups);
+document.addEventListener('DOMContentLoaded', toggleRegions);
 
 // Getting references to the HTML elements
 const slider = document.getElementById('slider');
@@ -460,6 +717,7 @@ const outputWidgetCode = () => {
     defaultSearchRadius: selectedSearchRadius,
     categories: selectedAlissServices,
     communityGroups: selectedCommunityGroups,
+    serviceAreas: selectedRegions,
     locationType: selectedLocationType
   }
 
@@ -475,6 +733,7 @@ const outputWidgetCode = () => {
     defaultSearchRadius: ${selectedSearchRadius},
     categories: ${JSON.stringify(selectedAlissServices)},
     communityGroups: ${JSON.stringify(selectedCommunityGroups)},
+    serviceAreas: ${JSON.stringify(selectedRegions)},
     locationType: '${selectedLocationType}'
   }<\/script>
   <!-- End Include the ALISS Map widget script -->
@@ -539,6 +798,7 @@ document.querySelector('#copy-code').addEventListener('click', copyToClipboard);
 
 addServicesToSelect()
 addCommunityGroupsToSelect()
+addRegionsToSelect()
 
 // load the following when the google maps script has loaded
  function initMap() {
@@ -580,6 +840,27 @@ addCommunityGroupsToSelect()
     if (!place.geometry) {
       console.log("No geometry available for this place");
       return;
+    }
+    
+    // Close region selector and clear selections when a location is selected
+    const regionList = document.getElementById('aliss-regions');
+    const toggleButton = document.querySelector('button[aria-controls="aliss-regions"]');
+    const locationSearchWrapper = document.querySelector('.relative:has(#aliss-location-search)');
+    const distanceControls = document.getElementById('distance-controls');
+    
+    if (regionList && !regionList.classList.contains('hidden')) {
+      clearRegionSelections();
+      regionList.classList.add('hidden');
+      if (toggleButton) {
+        toggleButton.setAttribute('aria-expanded', 'false');
+      }
+      // Show location search and distance controls
+      if (locationSearchWrapper) {
+        locationSearchWrapper.style.display = '';
+      }
+      if (distanceControls) {
+        distanceControls.style.display = '';
+      }
     }
 
     // get the lat and lng from the place but first check for any exceptions in rare cases we cannot get a postcode from the API
@@ -732,6 +1013,18 @@ clearIcon.addEventListener('click', () => {
   locationInput.focus();
   clearIcon.classList.add('hidden');
   clearIcon.classList.remove('block');
+  
+  // Close region selector and clear selections when location input is cleared
+  const regionList = document.getElementById('aliss-regions');
+  const toggleButton = document.querySelector('button[aria-controls="aliss-regions"]');
+  if (regionList && !regionList.classList.contains('hidden')) {
+    clearRegionSelections();
+    regionList.classList.add('hidden');
+    if (toggleButton) {
+      toggleButton.setAttribute('aria-expanded', 'false');
+    }
+  }
+  
   // trigger the change event on the postcode input
   // const event = new Event('change');
   // locationInput.dispatchEvent(event);
