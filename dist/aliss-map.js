@@ -163,6 +163,8 @@ const getServices = async (baseurl) => {
       // Only add if not already in the map
       if (!servicesMap.has(id)) {
         servicesMap.set(id, { id, name, gcfn, description, locations, url, phone, email, organisation, distance, permalink, referral_url });
+      } else {
+        console.log(`Duplicate service skipped: ${name} (ID: ${id})`);
       }
     });
   } catch (err) {
