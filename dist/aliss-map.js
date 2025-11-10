@@ -129,7 +129,7 @@ const getServices = async (baseurl) => {
   // Helper function to fetch all pages for a single category
   const fetchCategoryData = async (cat) => {
     let allServicesForCategory = [];
-    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&service_areas=${serviceAreas}&location_type=${locationType}&page_size=1000&radius=${radius}&format=json&source=customisable-map&page=`;
+    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&service_areas=${serviceAreas}&location_type=${locationType}&page_size=1000&radius=${radius}&sort=sort-distance&format=json&source=customisable-map&page=`;
     let page = 1;
     let lastResult = [];
     
@@ -215,6 +215,8 @@ const addMarkersToMap = async (services) => {
             
             // Add to valid coordinates for bounds calculation
             validLatLngs.push([location.latitude, location.longitude]);
+          } else {
+            console.log(`Location skipped due to distance: ${service.name} at ${location.formatted_address} (${locationDistance.toFixed(2)} km away) max radius is ${maxRadius} km`);
           }
         }
       });
@@ -310,7 +312,6 @@ const buildServiceCard = (service, locationOverride) => {
         ? `By <a href="${service.organisation.aliss_url}" target="_blank">${service.organisation.name}</a>` 
         : `By ${service.organisation.name}`}
     </div>
-    ${service.distance < 1000 ? `<span class="service-distance">${service.distance.toFixed(2)} km away</span>` : ''}
   `;
   
   // Get reference to service card after HTML was set
@@ -522,18 +523,11 @@ async function doSearch() {
   // get all the services from the API into an arrayOfObjects
   const servicesList = await getServices('https://api.aliss.org/v5/services/');
 
-  // now sort them but distance into a new arrayOfObjects
-  const sortedArray = servicesList.sort((a, b) => {  
-  return a.distance >= b.distance
-      ? 1
-      : -1
-  })
-  
-  // show results list first with pagination handling
-  buildResultsList(sortedArray);
+  // show results list first with pagination handling (using API order, no distance sorting)
+  buildResultsList(servicesList);
 
   // add markers to the map await so we can calculate the total that meet the distance critieria and use it in the results list
-  await addMarkersToMap(sortedArray);
+  await addMarkersToMap(servicesList);
 
   // hide the loader
   loader.classList.add('load-hide');
