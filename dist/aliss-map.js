@@ -594,7 +594,22 @@ const addMarkersToMap = async (services) => {
         return serviceCard;
       };
       
-      markerObj.bindPopup(popupFn)
+      // Configure popup options to prevent clipping and auto-pan intelligently
+      const popupOptions = {
+        maxWidth: 300,
+        minWidth: 250,
+        maxHeight: 400,
+        autoPan: true,
+        autoPanPadding: [10, 10],
+        autoPanPaddingBottomRight: [10, 80], // Extra padding for bottom right
+        autoPanPaddingTopLeft: [10, 10],
+        keepInView: true, // Keep popup in view when map is panned
+        closeButton: true,
+        autoClose: false, // Don't auto-close when another popup opens
+        className: 'service-popup'
+      };
+      
+      markerObj.bindPopup(popupFn, popupOptions)
                .bindTooltip(`<strong>${service.name}</strong><br/>${location.street_address || ''}<br/>${location.locality || ''}`);
                
       markersArray[`${service.id}${location.latitude}${location.longitude}`] = markerObj;
@@ -624,16 +639,16 @@ const addMarkersToMap = async (services) => {
   }
   
   // AFTER the initial fit, set minimum zoom and bounds restrictions
-  // Southwest and Northeast corners of Scotland
+  // Scotland bounds with generous margin for popup display
   const scotlandBounds = L.latLngBounds(
-    [54.5, -8.5],  // Southwest corner
-    [60.8, 0.5]    // Northeast corner
+    [53.8, -9.2],  // Southwest corner (generous margin for popups)
+    [61.6, 1.2]    // Northeast corner (generous margin for popups)
   );
   
   // Set minimum zoom to keep Scotland visible (approximately zoom level 6)
   map.setMinZoom(6);
   
-  // Set max bounds to Scotland area (with some padding)
+  // Set static bounds - no dynamic changes to prevent "dance" effect
   map.setMaxBounds(scotlandBounds);
   
   // Enable zoom and dragging
@@ -1414,7 +1429,38 @@ style.innerHTML = `
         font-size: 20px;
         min-width: 150px;
         position: relative;
+      }
 
+      /* Enhanced Popup Styling for Better Edge Handling */
+      .aliss-map .leaflet-popup {
+        margin-bottom: 20px;
+      }
+      
+      .aliss-map .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      
+      .aliss-map .service-popup .leaflet-popup-content {
+        margin: 15px;
+        line-height: 1.4;
+        max-width: 280px;
+      }
+      
+      .aliss-map .leaflet-popup-tip {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      
+      /* Ensure popup content doesn't get too wide on small screens */
+      @media (max-width: 480px) {
+        .aliss-map .service-popup .leaflet-popup-content {
+          max-width: 250px;
+        }
+        .aliss-map .leaflet-popup-content-wrapper {
+          max-height: 300px;
+        }
       }
 
       `
