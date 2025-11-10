@@ -89,7 +89,7 @@ const addServiceAreaPolygons = () => {
         // Create Leaflet polygon from coordinates
         // GeoJSON uses [longitude, latitude], Leaflet uses [latitude, longitude]
         const leafletCoords = geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
-        console.log(`Converting ${leafletCoords.length} coordinates for ${areaSlug}`);
+        console.log(`Converting ${leafletCoords.length} coordinates for ${areaSlug} (Polygon)`);
         
         const polygon = L.polygon(leafletCoords, {
           ...polygonStyle,
@@ -102,8 +102,35 @@ const addServiceAreaPolygons = () => {
         serviceAreaPolygons.push(polygon);
         
         console.log(`✅ Added polygon overlay for ${areaSlug} with ${leafletCoords.length} points`);
+      } else if (geometry && geometry.type === 'MultiPolygon' && geometry.coordinates) {
+        // Handle MultiPolygon - create a polygon for each sub-polygon
+        console.log(`Processing MultiPolygon for ${areaSlug} with ${geometry.coordinates.length} polygons`);
+        
+        geometry.coordinates.forEach((polygonCoords, index) => {
+          try {
+            // Each polygon in MultiPolygon has its own coordinate array
+            // Take the exterior ring (first array) of each polygon
+            const leafletCoords = polygonCoords[0].map(coord => [coord[1], coord[0]]);
+            console.log(`Converting ${leafletCoords.length} coordinates for ${areaSlug} polygon ${index + 1}`);
+            
+            const polygon = L.polygon(leafletCoords, {
+              ...polygonStyle,
+              // Add title attribute for accessibility
+              title: `Service Area: ${areaSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} (Part ${index + 1})`
+            });
+            
+            // Add to map
+            polygon.addTo(map);
+            serviceAreaPolygons.push(polygon);
+            
+            console.log(`✅ Added MultiPolygon part ${index + 1} for ${areaSlug} with ${leafletCoords.length} points`);
+          } catch (partError) {
+            console.error(`❌ Error creating MultiPolygon part ${index + 1} for ${areaSlug}:`, partError);
+          }
+        });
       } else {
-        console.warn(`❌ Cannot create polygon for ${areaSlug}: invalid geometry type (${geometry?.type})`);
+        console.warn(`❌ Cannot create polygon for ${areaSlug}: invalid or unsupported geometry type (${geometry?.type})`);
+        console.warn('Supported types: Polygon, MultiPolygon');
         console.warn('Full geometry object:', geometry);
       }
     } catch (error) {
