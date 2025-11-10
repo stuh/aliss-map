@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALISS Map - Polygon Overlay Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .test-info { 
+      background: #f0f8ff; 
+      padding: 15px; 
+      margin-bottom: 20px; 
+      border-left: 4px solid #004785;
+    }
+    #alissmap { 
+      border: 2px solid #ddd; 
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+<h1>ALISS Map - Service Area Polygon Overlay Test</h1>
+
+<div class="test-info">
+  <h3>What to expect:</h3>
+  <ul>
+    <li>The map should show Glasgow City service area boundary as a blue dashed polygon overlay</li>
+    <li>Services should be filtered to only show those within the Glasgow City boundaries</li>
+    <li>You can click on the polygon boundary to see a popup with area information</li>
+    <li>Check the browser console for detailed logging about polygon creation</li>
+  </ul>
+</div>
+
+<div id="alissmap"></div>
+
+<script src="/dist/aliss-map.js" type="text/javascript" defer></script>
+<script type="text/javascript">
+  // Configure map with Glasgow City service area
+  alissMapConfig = {
+    target: '#alissmap',
+    defaultPostCode: 'G11AB',
+    defaultLatLng: [55.86521, -4.26990],
+    defaultSearchRadius: 50000,
+    categories: ['money', 'food-and-nutrition', 'community-resources'],
+    serviceAreas: ['glasgow-city']  // This should trigger polygon overlay
+  }
+  
+  // Add debug logging
+  window.addEventListener('load', function() {
+    console.log('🔍 Polygon Overlay Test Started');
+    console.log('Service Areas configured:', alissMapConfig.serviceAreas);
+    
+    // Wait a bit then check if polygons were added
+    setTimeout(() => {
+      console.log('🔍 Checking for polygon overlays...');
+      if (window.serviceAreaPolygons && window.serviceAreaPolygons.length > 0) {
+        console.log(`✅ Found ${window.serviceAreaPolygons.length} polygon overlays on map`);
+      } else {
+        console.log('❌ No polygon overlays found - check implementation');
+      }
+    }, 5000);
+  });
+</script>
+
+</body>
+</html>

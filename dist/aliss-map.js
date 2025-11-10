@@ -14,6 +14,119 @@ let validLatLngs = []; // Global array to store valid coordinates
 // Global variables for GeoJSON service areas functionality
 let serviceAreaBoundaries = new Map(); // Cache for GeoJSON boundaries
 let allServiceAreas = null; // Cache for all service areas data
+let serviceAreaPolygons = []; // Store polygon overlays for removal/update
+
+// Make serviceAreaPolygons globally accessible for debugging
+window.serviceAreaPolygons = serviceAreaPolygons;
+
+// Clear service area boundaries and polygons for fresh reload
+const clearServiceAreaData = () => {
+  console.log('🔄 Clearing service area boundaries and polygons for fresh reload');
+  
+  // Clear existing polygons from map
+  serviceAreaPolygons.forEach(polygon => {
+    if (map && map.hasLayer(polygon)) {
+      map.removeLayer(polygon);
+    }
+  });
+  serviceAreaPolygons.length = 0; // Clear the array
+  
+  // Clear cached boundaries and service areas
+  serviceAreaBoundaries.clear();
+  allServiceAreas = null;
+  
+  // Update global reference
+  window.serviceAreaPolygons = serviceAreaPolygons;
+  
+  console.log('✅ Service area data cleared - ready for fresh configuration');
+};
+
+// Make clearServiceAreaData globally accessible for the configuration interface
+window.clearServiceAreaData = clearServiceAreaData;
+
+// Add polygon overlays to show service area boundaries on the map
+const addServiceAreaPolygons = () => {
+  if (!map || serviceAreaBoundaries.size === 0) {
+    console.log('🔍 No map or service area boundaries to display');
+    return;
+  }
+  
+  console.log('🗺️ Adding service area polygon overlays to map...');
+  console.log('Available boundaries:', Array.from(serviceAreaBoundaries.keys()));
+  
+  // Remove existing polygons first
+  serviceAreaPolygons.forEach(polygon => {
+    if (map.hasLayer(polygon)) {
+      map.removeLayer(polygon);
+    }
+  });
+  serviceAreaPolygons.length = 0; // Clear the array
+  
+  // Style for service area polygons - more visible for testing
+  const polygonStyle = {
+    color: '#004785',        // ALISS dark blue border
+    weight: 3,               // Border thickness
+    fillColor: '#1e7abd',    // ALISS blue fill
+    fillOpacity: 0.15,       // Slightly more visible fill
+    opacity: 0.9,            // More opaque border
+    dashArray: '8, 8'        // Dashed border for better visibility
+  };
+  
+  // Add each service area boundary as a polygon overlay
+  serviceAreaBoundaries.forEach((geoJsonFeature, areaSlug) => {
+    try {
+      console.log(`Processing boundary for ${areaSlug}:`, geoJsonFeature);
+      
+      // Handle different GeoJSON structures
+      let geometry = geoJsonFeature;
+      if (geoJsonFeature.geometry) {
+        geometry = geoJsonFeature.geometry;
+      }
+      
+      console.log(`Geometry type for ${areaSlug}:`, geometry?.type);
+      
+      if (geometry && geometry.type === 'Polygon' && geometry.coordinates) {
+        // Create Leaflet polygon from coordinates
+        // GeoJSON uses [longitude, latitude], Leaflet uses [latitude, longitude]
+        const leafletCoords = geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
+        console.log(`Converting ${leafletCoords.length} coordinates for ${areaSlug}`);
+        
+        const polygon = L.polygon(leafletCoords, {
+          ...polygonStyle,
+          // Add title attribute for accessibility
+          title: `Service Area: ${areaSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`
+        });
+        
+        // Add to map
+        polygon.addTo(map);
+        serviceAreaPolygons.push(polygon);
+        
+        console.log(`✅ Added polygon overlay for ${areaSlug} with ${leafletCoords.length} points`);
+      } else {
+        console.warn(`❌ Cannot create polygon for ${areaSlug}: invalid geometry type (${geometry?.type})`);
+        console.warn('Full geometry object:', geometry);
+      }
+    } catch (error) {
+      console.error(`❌ Error creating polygon overlay for ${areaSlug}:`, error);
+    }
+  });
+  
+  // Update global reference
+  window.serviceAreaPolygons = serviceAreaPolygons;
+  
+  console.log(`📍 Added ${serviceAreaPolygons.length} service area polygon overlays to map`);
+  
+  // Fit map to show all polygons if any were added
+  if (serviceAreaPolygons.length > 0) {
+    try {
+      const group = new L.featureGroup(serviceAreaPolygons);
+      map.fitBounds(group.getBounds(), { padding: [20, 20] });
+      console.log('🎯 Map view adjusted to show service area boundaries');
+    } catch (error) {
+      console.warn('Could not fit map to polygon bounds:', error);
+    }
+  }
+};
 
 // Point-in-polygon algorithm using ray casting method
 const isPointInPolygon = (point, polygon) => {
@@ -99,10 +212,18 @@ const isPointInServiceAreas = (lat, lng) => {
 };
 
 // Fetch GeoJSON boundaries from service areas API
-const fetchServiceAreaBoundaries = async () => {
-  if (!alissDefaults.serviceAreas || serviceAreaBoundaries.size > 0) {
-    console.log('Skipping boundary fetch - no service areas configured or already loaded');
-    return; // No service areas configured or already loaded
+const fetchServiceAreaBoundaries = async (forceReload = false) => {
+  if (!alissDefaults.serviceAreas) {
+    console.log('Skipping boundary fetch - no service areas configured');
+    return; // No service areas configured
+  }
+  
+  // If forcing reload or no boundaries loaded yet
+  if (forceReload || serviceAreaBoundaries.size === 0) {
+    console.log('🔄 Loading service area boundaries...');
+  } else {
+    console.log('Skipping boundary fetch - already loaded (use forceReload to refresh)');
+    return;
   }
   
   const configuredAreas = Array.isArray(alissDefaults.serviceAreas) 
@@ -362,6 +483,9 @@ const addMarkersToMap = async (services) => {
 
   // Ensure service area boundaries are loaded if using service areas
   await fetchServiceAreaBoundaries();
+
+  // Add service area polygons to the map
+  addServiceAreaPolygons();
 
   // create an array to hold the latlngs of the markers
   const postCode = getPostCode();
@@ -781,6 +905,9 @@ async function doSearch() {
 
   // Load service area boundaries if using service areas
   await fetchServiceAreaBoundaries();
+
+  // Add service area polygons to the map
+  addServiceAreaPolygons();
 
   // get all the services from the API into an arrayOfObjects
   const servicesList = await getServices('https://api.aliss.org/v5/services/');

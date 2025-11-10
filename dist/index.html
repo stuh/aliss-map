@@ -194,7 +194,7 @@ const addServicesToSelect = async () => {
         } else {
           selectedAlissServices = selectedAlissServices.filter((item) => item !== category);
         }
-        // outputWidgetCode();
+        // outputWidgetCode(); // Only update on button click, not auto-update
       });
     });
     
@@ -314,7 +314,7 @@ const addRegionsToSelect = async () => {
         } else {
           selectedRegions = selectedRegions.filter((item) => item !== region);
         }
-        // outputWidgetCode();
+        // outputWidgetCode(); // Only update on button click, not auto-update
       });
     });
     
@@ -760,6 +760,12 @@ const outputWidgetCode = () => {
   }
   // clear existing map
   document.querySelector('#alissmap').innerHTML = '';
+  
+  // Clear cached service area data for fresh configuration
+  if (window.clearServiceAreaData) {
+    window.clearServiceAreaData();
+  }
+  
   // re-initialize the map
   initALISSMap();
 

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALISS Map - Fixed Polygon Test</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      line-height: 1.6;
+    }
+    .test-info { 
+      background: #f0f8ff; 
+      padding: 15px; 
+      margin-bottom: 20px; 
+      border-left: 4px solid #004785;
+      border-radius: 5px;
+    }
+    .config-controls {
+      background: #f8f9fa;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+    button {
+      background: #004785;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #1e7abd;
+    }
+    #alissmap { 
+      border: 2px solid #ddd; 
+      border-radius: 8px;
+      overflow: hidden;
+      height: 500px;
+      margin: 20px 0;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      font-family: monospace;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .info { background: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+
+<h1>🗺️ ALISS Map - Fixed Polygon Test</h1>
+
+<div class="test-info">
+  <h3>✅ Fixed Issues:</h3>
+  <ol>
+    <li><strong>Removed polygon popups</strong> - Polygons now show only as outlines without clickable popups</li>
+    <li><strong>Fixed region updates</strong> - Changing regions now properly clears old boundaries and loads new ones</li>
+    <li><strong>Added debugging</strong> - Console logs show when service area data is cleared and reloaded</li>
+  </ol>
+</div>
+
+<div class="config-controls">
+  <h3>🔧 Test Controls:</h3>
+  <button onclick="changeToGlasgow()">Show Glasgow City Only</button>
+  <button onclick="changeToEdinburgh()">Show Edinburgh Only</button> 
+  <button onclick="changeToBoth()">Show Both Cities</button>
+  <button onclick="clearAreas()">Clear All Areas</button>
+</div>
+
+<div id="status" class="status info">Ready to test...</div>
+
+<div id="alissmap"></div>
+
+<script src="/dist/aliss-map.js" type="text/javascript" defer></script>
+<script type="text/javascript">
+  // Start with Glasgow City
+  let alissMapConfig = {
+    target: '#alissmap',
+    defaultLatLng: [55.86521, -4.26990],
+    defaultSearchRadius: 50000,
+    categories: ['money', 'food-and-nutrition'],
+    serviceAreas: ['glasgow-city']
+  }
+  
+  const statusDiv = document.getElementById('status');
+  
+  function updateStatus(message, type = 'info') {
+    statusDiv.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+    statusDiv.className = `status ${type}`;
+    console.log('📊 Status:', message);
+  }
+  
+  function reinitializeMap(newConfig, description) {
+    updateStatus(`🔄 ${description}...`);
+    
+    // Clear existing map
+    const mapDiv = document.querySelector('#alissmap');
+    if (mapDiv) {
+      mapDiv.innerHTML = '';
+    }
+    
+    // Clear service area data
+    if (window.clearServiceAreaData) {
+      window.clearServiceAreaData();
+    }
+    
+    // Update config
+    alissMapConfig = { ...alissMapConfig, ...newConfig };
+    
+    // Reinitialize
+    setTimeout(() => {
+      initALISSMap();
+      updateStatus(`✅ ${description} complete`, 'success');
+    }, 100);
+  }
+  
+  function changeToGlasgow() {
+    reinitializeMap(
+      { serviceAreas: ['glasgow-city'], defaultLatLng: [55.86521, -4.26990] },
+      'Switching to Glasgow City only'
+    );
+  }
+  
+  function changeToEdinburgh() {
+    reinitializeMap(
+      { serviceAreas: ['city-of-edinburgh'], defaultLatLng: [55.95, -3.2] },
+      'Switching to Edinburgh only'
+    );
+  }
+  
+  function changeToBoth() {
+    reinitializeMap(
+      { serviceAreas: ['glasgow-city', 'city-of-edinburgh'], defaultLatLng: [55.9, -3.7] },
+      'Switching to both Glasgow and Edinburgh'
+    );
+  }
+  
+  function clearAreas() {
+    reinitializeMap(
+      { serviceAreas: [], defaultLatLng: [56.4907, -4.2026] },
+      'Clearing all service areas'
+    );
+  }
+  
+  // Initialize on load
+  window.addEventListener('load', function() {
+    updateStatus('Initializing ALISS Map with Glasgow City boundary');
+    
+    // Monitor for polygon creation
+    let checkCount = 0;
+    const checkInterval = setInterval(() => {
+      const polygons = window.serviceAreaPolygons || [];
+      const boundaries = window.serviceAreaBoundaries || new Map();
+      
+      if (polygons.length > 0) {
+        updateStatus(`✅ ${polygons.length} polygon overlay(s) loaded successfully`, 'success');
+        clearInterval(checkInterval);
+      } else if (checkCount++ > 10) {
+        updateStatus(`⚠️ No polygons found after ${checkCount} seconds`, 'info');
+        clearInterval(checkInterval);
+      }
+    }, 1000);
+  });
+</script>
+
+</body>
+</html>

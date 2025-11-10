@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALISS Map - Complete Polygon Overlay Demo</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      line-height: 1.6;
+    }
+    .header {
+      background: linear-gradient(135deg, #004785, #1e7abd);
+      color: white;
+      padding: 20px;
+      margin: -20px -20px 20px -20px;
+      border-radius: 0 0 10px 10px;
+    }
+    .feature-box { 
+      background: #f8f9fa; 
+      padding: 20px; 
+      margin: 20px 0;
+      border-left: 4px solid #004785;
+      border-radius: 5px;
+    }
+    .demo-section {
+      margin: 30px 0;
+    }
+    #alissmap { 
+      border: 2px solid #ddd; 
+      border-radius: 8px;
+      overflow: hidden;
+      height: 600px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .controls {
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    .status {
+      background: #e9ecef;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 14px;
+      margin: 10px 0;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    button {
+      background: #004785;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #1e7abd;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🗺️ ALISS Map - Service Area Polygon Overlays</h1>
+  <p>Visualizing service boundaries with interactive polygon overlays</p>
+</div>
+
+<div class="feature-box">
+  <h3>✨ New Feature: Service Area Polygon Overlays</h3>
+  <p>When service areas are configured, the map now displays the actual administrative boundaries as semi-transparent polygon overlays. This helps users understand exactly which geographic areas are being searched.</p>
+  
+  <h4>🎯 What you'll see:</h4>
+  <ul>
+    <li><strong>Blue dashed polygons</strong> showing the exact boundaries of configured service areas</li>
+    <li><strong>Interactive popups</strong> when you click on the polygon boundaries</li>
+    <li><strong>Automatic map fitting</strong> to show all configured service areas</li>
+    <li><strong>Service filtering</strong> - only services within the polygon boundaries are shown</li>
+  </ul>
+</div>
+
+<div class="demo-section">
+  <h3>🏴󠁧󠁢󠁳󠁣󠁴󠁿 Live Demo: Glasgow City & City of Edinburgh</h3>
+  
+  <div class="controls">
+    <button onclick="checkPolygons()">🔍 Check Polygon Status</button>
+    <button onclick="togglePolygons()">👁️ Toggle Polygon Visibility</button>
+    <button onclick="fitToBounds()">🎯 Fit Map to Boundaries</button>
+  </div>
+  
+  <div id="status" class="status">Loading map and service area boundaries...</div>
+  
+  <div id="alissmap"></div>
+</div>
+
+<div class="feature-box">
+  <h3>💡 Technical Details</h3>
+  <ul>
+    <li><strong>Data Source:</strong> ALISS Service Areas API (v5)</li>
+    <li><strong>Format:</strong> GeoJSON polygons from administrative boundaries</li>
+    <li><strong>Rendering:</strong> Leaflet.js polygon overlays with custom styling</li>
+    <li><strong>Performance:</strong> Boundaries cached after first load</li>
+  </ul>
+</div>
+
+<script src="/dist/aliss-map.js" type="text/javascript" defer></script>
+<script type="text/javascript">
+  // Configure map with multiple service areas
+  alissMapConfig = {
+    target: '#alissmap',
+    defaultPostCode: 'EH1 1YZ', // Edinburgh postcode for better center point
+    defaultLatLng: [55.95, -3.2], // Center between Glasgow and Edinburgh
+    defaultSearchRadius: 100000, // Large radius to cover both cities
+    categories: ['money', 'food-and-nutrition', 'community-resources'],
+    serviceAreas: ['glasgow-city', 'city-of-edinburgh'] // Multiple service areas
+  }
+  
+  let polygonsVisible = true;
+  const statusDiv = document.getElementById('status');
+  
+  function updateStatus(message, type = 'info') {
+    statusDiv.textContent = message;
+    statusDiv.className = `status ${type}`;
+  }
+  
+  function checkPolygons() {
+    const polygons = window.serviceAreaPolygons || [];
+    const boundaries = window.serviceAreaBoundaries || new Map();
+    
+    updateStatus(
+      `Found ${polygons.length} polygon overlays on map, ${boundaries.size} boundaries loaded`, 
+      polygons.length > 0 ? 'success' : 'error'
+    );
+    
+    console.log('🔍 Polygon Status:', {
+      polygons: polygons.length,
+      boundaries: boundaries.size,
+      polygonObjects: polygons,
+      boundaryKeys: Array.from(boundaries.keys())
+    });
+  }
+  
+  function togglePolygons() {
+    const polygons = window.serviceAreaPolygons || [];
+    
+    if (polygons.length === 0) {
+      updateStatus('No polygons found to toggle', 'error');
+      return;
+    }
+    
+    polygonsVisible = !polygonsVisible;
+    
+    polygons.forEach(polygon => {
+      if (polygonsVisible) {
+        polygon.addTo(map);
+      } else {
+        map.removeLayer(polygon);
+      }
+    });
+    
+    updateStatus(
+      `Polygons ${polygonsVisible ? 'shown' : 'hidden'} (${polygons.length} overlays)`, 
+      'success'
+    );
+  }
+  
+  function fitToBounds() {
+    const polygons = window.serviceAreaPolygons || [];
+    
+    if (polygons.length === 0) {
+      updateStatus('No polygons found to fit bounds', 'error');
+      return;
+    }
+    
+    try {
+      const group = new L.featureGroup(polygons);
+      map.fitBounds(group.getBounds(), { padding: [50, 50] });
+      updateStatus(`Map fitted to show ${polygons.length} service area boundaries`, 'success');
+    } catch (error) {
+      updateStatus('Error fitting bounds: ' + error.message, 'error');
+    }
+  }
+  
+  // Monitor loading progress
+  window.addEventListener('load', function() {
+    console.log('🚀 Starting ALISS Map with polygon overlays...');
+    updateStatus('Initializing map with service areas: ' + alissMapConfig.serviceAreas.join(', '));
+    
+    // Check periodically for boundaries and polygons
+    let checkCount = 0;
+    const maxChecks = 20;
+    
+    const checkInterval = setInterval(() => {
+      checkCount++;
+      const boundaries = window.serviceAreaBoundaries || new Map();
+      const polygons = window.serviceAreaPolygons || [];
+      
+      if (boundaries.size > 0 && polygons.length > 0) {
+        updateStatus(
+          `✅ Success! ${polygons.length} polygon overlays loaded for ${boundaries.size} service areas`, 
+          'success'
+        );
+        clearInterval(checkInterval);
+      } else if (checkCount >= maxChecks) {
+        updateStatus(
+          `⚠️ Timeout: ${boundaries.size} boundaries loaded, ${polygons.length} polygons created`, 
+          'error'
+        );
+        clearInterval(checkInterval);
+      } else {
+        updateStatus(
+          `⏳ Loading... ${boundaries.size} boundaries, ${polygons.length} polygons (${checkCount}/${maxChecks})`
+        );
+      }
+    }, 1000);
+  });
+</script>
+
+</body>
+</html>
