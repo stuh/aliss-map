@@ -176,8 +176,11 @@ const addServicesToSelect = async () => {
   try {
     const data = await getAlissServices();
 
+    // Sort categories alphabetically by name
+    const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+
     // Generate the HTML for the checkbox list
-    const checkboxListHtml = createCheckboxListFromJSON(data, 1, 'services-div', 'sub_categories');
+    const checkboxListHtml = createCheckboxListFromJSON(sortedData, 1, 'services-div', 'sub_categories');
   
     // Insert the generated HTML into the DOM (for example, inside a div with id "category-list")
     document.getElementById('aliss-services').innerHTML = checkboxListHtml;
@@ -210,8 +213,11 @@ const addCommunityGroupsToSelect = async () => {
   try {
     const data = await getAlissCommunityGroups();
 
+    // Sort community groups alphabetically by name
+    const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+
     // Generate the HTML for the checkbox list
-    const checkboxListHtml = createCheckboxListFromJSON(data, 1, 'community-groups-div', 'sub_communitygroups');
+    const checkboxListHtml = createCheckboxListFromJSON(sortedData, 1, 'community-groups-div', 'sub_communitygroups');
     // Insert the generated HTML into the DOM (for example, inside a div with id "category-list")
     document.getElementById('aliss-communitygroups').innerHTML = checkboxListHtml;
     
@@ -257,6 +263,13 @@ const buildRegionHierarchy = (regions) => {
   wards.forEach(ward => {
     if (regionMap[ward.parent_id]) {
       regionMap[ward.parent_id].sub_regions.push(ward);
+    }
+  });
+  
+  // Sort wards alphabetically within each region
+  Object.values(regionMap).forEach(region => {
+    if (region.sub_regions && region.sub_regions.length > 0) {
+      region.sub_regions.sort((a, b) => a.name.localeCompare(b.name));
     }
   });
   
@@ -315,9 +328,12 @@ const createCheckboxListFromJSON = (data, level = 1, targetdiv, subCategoryProp 
         return '';
     }
 
+    // Sort data alphabetically by name for consistent ordering
+    const sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
+
     let html = `<ul class="ml-4 pt-2 ${level == 1 ? '' : 'hidden'}" id="${targetdiv}" role="group" aria-level="${level}">`;
     
-    data.forEach(item => {
+    sortedData.forEach(item => {
         const hasSubCategories = item[subCategoryProp] && item[subCategoryProp].length > 0;
         const toggleId = `toggle-${item.slug}`;
         const ariaExpanded = hasSubCategories ? 'false' : '';
