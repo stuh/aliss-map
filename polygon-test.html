@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoJSON Point-in-Polygon Test</title>
+</head>
+<body>
+<h1>GeoJSON Point-in-Polygon Algorithm Test</h1>
+<div id="test-results"></div>
+
+<script>
+// Test our point-in-polygon algorithm with known coordinates
+const isPointInPolygon = (point, polygon) => {
+  const [x, y] = point;
+  let inside = false;
+  
+  // Handle different GeoJSON polygon structures
+  let coords = polygon;
+  if (polygon.type === 'Polygon') {
+    coords = polygon.coordinates[0]; // Take exterior ring
+  } else if (Array.isArray(polygon) && Array.isArray(polygon[0])) {
+    coords = polygon;
+  }
+  
+  if (!coords || coords.length < 3) {
+    return false;
+  }
+  
+  for (let i = 0, j = coords.length - 1; i < coords.length; j = i++) {
+    const [xi, yi] = coords[i];
+    const [xj, yj] = coords[j];
+    
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+      inside = !inside;
+    }
+  }
+  
+  return inside;
+};
+
+// Test with a simple square polygon
+const testPolygon = [
+  [-4.5, 55.5], // Southwest
+  [-4.0, 55.5], // Southeast  
+  [-4.0, 56.0], // Northeast
+  [-4.5, 56.0], // Northwest
+  [-4.5, 55.5]  // Close the polygon
+];
+
+const testPoints = [
+  { name: "Inside polygon", coords: [-4.25, 55.75], expectedInside: true },
+  { name: "Outside polygon (west)", coords: [-5.0, 55.75], expectedInside: false },
+  { name: "Outside polygon (east)", coords: [-3.5, 55.75], expectedInside: false },
+  { name: "Glasgow City Center", coords: [-4.251433, 55.864237], expectedInside: true },
+  { name: "Edinburgh City Center", coords: [-3.188267, 55.953251], expectedInside: false }
+];
+
+let results = '<h2>Point-in-Polygon Test Results:</h2>';
+results += '<p>Test polygon coordinates: ' + JSON.stringify(testPolygon) + '</p>';
+
+testPoints.forEach(test => {
+  const result = isPointInPolygon(test.coords, testPolygon);
+  const status = result === test.expectedInside ? '✅ PASS' : '❌ FAIL';
+  results += `<p>${status} ${test.name}: [${test.coords.join(', ')}] = ${result} (expected ${test.expectedInside})</p>`;
+});
+
+// Test service areas API
+async function testServiceAreasAPI() {
+  results += '<h2>Service Areas API Test:</h2>';
+  
+  try {
+    const response = await fetch('https://www.aliss.org/api/v4/service-areas/');
+    
+    if (response.ok) {
+      const data = await response.json();
+      const serviceAreas = data.results || data;
+      results += `<p>✅ Service areas API: ${response.status} OK</p>`;
+      results += `<p>Total service areas: ${serviceAreas.length}</p>`;
+      
+      // Find Glasgow City in the results
+      const glasgowArea = serviceAreas.find(area => area.slug === 'glasgow-city');
+      if (glasgowArea) {
+        results += `<p>✅ Found Glasgow City service area</p>`;
+        results += `<p>Geometry type: ${glasgowArea.geometry?.type || 'No geometry'}</p>`;
+        
+        if (glasgowArea.geometry?.type === 'Polygon') {
+          const coords = glasgowArea.geometry.coordinates[0];
+          results += `<p>Polygon has ${coords.length} coordinates</p>`;
+          
+          // Test a point we know should be in Glasgow
+          const glasgowPoint = [-4.251433, 55.864237]; // Glasgow city center
+          const isInGlasgow = isPointInPolygon(glasgowPoint, coords);
+          results += `<p>Glasgow city center [${glasgowPoint.join(', ')}] is ${isInGlasgow ? 'INSIDE' : 'OUTSIDE'} Glasgow boundary</p>`;
+        }
+      } else {
+        results += `<p>❌ Glasgow City not found in service areas</p>`;
+      }
+    } else {
+      results += `<p>❌ Service areas API: ${response.status} Error</p>`;
+    }
+  } catch (error) {
+    results += `<p>❌ Error testing service areas API: ${error.message}</p>`;
+  }
+  
+  document.getElementById('test-results').innerHTML = results;
+}
+
+document.getElementById('test-results').innerHTML = results;
+testServiceAreasAPI();
+</script>
+
+</body>
+</html>

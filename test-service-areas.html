@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Service Areas API</title>
+</head>
+<body>
+    <h1>Service Areas API Test</h1>
+    <div id="results"></div>
+
+    <script>
+        async function testServiceAreasAPI() {
+            const areas = ['glasgow-city', 'city-of-edinburgh'];
+            const results = document.getElementById('results');
+            
+            for (const area of areas) {
+                try {
+                    console.log(`Testing service area: ${area}`);
+                    const response = await fetch(`https://www.aliss.org/api/service-areas/${area}/`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        results.innerHTML += `
+                            <h2>Service Area: ${area}</h2>
+                            <p>Status: ${response.status} OK</p>
+                            <p>Data type: ${data.type || 'Unknown'}</p>
+                            <p>Features: ${data.features ? data.features.length : 'None'}</p>
+                            <pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>
+                            <hr>
+                        `;
+                    } else {
+                        results.innerHTML += `
+                            <h2>Service Area: ${area}</h2>
+                            <p>Status: ${response.status} Error</p>
+                            <p>Response: ${await response.text()}</p>
+                            <hr>
+                        `;
+                    }
+                } catch (error) {
+                    results.innerHTML += `
+                        <h2>Service Area: ${area}</h2>
+                        <p>Error: ${error.message}</p>
+                        <hr>
+                    `;
+                }
+            }
+        }
+        
+        // Test when page loads
+        testServiceAreasAPI();
+    </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALISS Map - Complete GeoJSON Filtering Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+    .console-output { background: #f5f5f5; padding: 10px; font-family: monospace; max-height: 300px; overflow-y: auto; }
+    .success { color: green; }
+    .error { color: red; }
+    .info { color: blue; }
+  </style>
+</head>
+<body>
+
+<h1>ALISS Map - Complete GeoJSON Filtering Test</h1>
+
+<div class="test-section">
+  <h2>Test 1: Service Areas API Accessibility</h2>
+  <div id="api-test-results">Testing...</div>
+</div>
+
+<div class="test-section">
+  <h2>Test 2: Point-in-Polygon Algorithm</h2>
+  <div id="polygon-test-results">Testing...</div>
+</div>
+
+<div class="test-section">
+  <h2>Test 3: ALISS Map with GeoJSON Filtering</h2>
+  <p>Map configured with Glasgow City service area. Check browser console for detailed logs.</p>
+  <div id="alissmap"></div>
+</div>
+
+<div class="test-section">
+  <h2>Console Output</h2>
+  <div id="console-output" class="console-output"></div>
+</div>
+
+<script src="/dist/aliss-map.js" type="text/javascript" defer></script>
+<script>
+// Override console.log to capture output
+const originalConsoleLog = console.log;
+const originalConsoleWarn = console.warn;
+const originalConsoleError = console.error;
+const consoleOutput = document.getElementById('console-output');
+
+function addToConsoleOutput(message, type = 'info') {
+  const div = document.createElement('div');
+  div.className = type;
+  div.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+  consoleOutput.appendChild(div);
+  consoleOutput.scrollTop = consoleOutput.scrollHeight;
+}
+
+console.log = function(...args) {
+  originalConsoleLog.apply(console, args);
+  addToConsoleOutput(args.join(' '), 'info');
+};
+
+console.warn = function(...args) {
+  originalConsoleWarn.apply(console, args);
+  addToConsoleOutput('WARN: ' + args.join(' '), 'error');
+};
+
+console.error = function(...args) {
+  originalConsoleError.apply(console, args);
+  addToConsoleOutput('ERROR: ' + args.join(' '), 'error');
+};
+
+// Test 1: Service Areas API
+async function testServiceAreasAPI() {
+  const resultsDiv = document.getElementById('api-test-results');
+  let html = '';
+  
+  const testAreas = ['glasgow-city', 'city-of-edinburgh'];
+  
+  try {
+    console.log('Testing service areas API...');
+    const response = await fetch('https://www.aliss.org/api/v4/service-areas/');
+    
+    if (response.ok) {
+      const data = await response.json();
+      const serviceAreas = data.results || data;
+      html += `<div class="success">✅ Service areas API accessible: ${serviceAreas.length} total areas</div>`;
+      
+      // Check if our test areas exist
+      for (const area of testAreas) {
+        const found = serviceAreas.find(sa => sa.slug === area);
+        if (found) {
+          html += `<div class="success">✅ ${area}: Found with ${found.geometry?.type || 'no geometry'}</div>`;
+        } else {
+          html += `<div class="error">❌ ${area}: Not found in service areas</div>`;
+        }
+      }
+    } else {
+      html += `<div class="error">❌ Service areas API returned ${response.status}</div>`;
+    }
+  } catch (error) {
+    html += `<div class="error">❌ API Error: ${error.message}</div>`;
+  }
+  
+  resultsDiv.innerHTML = html;
+}
+
+// Test 2: Point-in-Polygon Algorithm
+function testPointInPolygon() {
+  const resultsDiv = document.getElementById('polygon-test-results');
+  
+  // Simple test polygon (square around Glasgow area)
+  const testPolygon = [
+    [-4.5, 55.8], [-4.0, 55.8], [-4.0, 55.9], [-4.5, 55.9], [-4.5, 55.8]
+  ];
+  
+  const testPoints = [
+    { name: "Glasgow Center", coords: [-4.25, 55.85], expected: true },
+    { name: "Outside West", coords: [-5.0, 55.85], expected: false },
+    { name: "Outside East", coords: [-3.5, 55.85], expected: false }
+  ];
+  
+  // Use the same algorithm as in the main code
+  const isPointInPolygon = (point, polygon) => {
+    const [x, y] = point;
+    let inside = false;
+    
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const [xi, yi] = polygon[i];
+      const [xj, yj] = polygon[j];
+      
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
+    }
+    
+    return inside;
+  };
+  
+  let html = '<p>Test polygon: ' + JSON.stringify(testPolygon) + '</p>';
+  
+  testPoints.forEach(test => {
+    const result = isPointInPolygon(test.coords, testPolygon);
+    const status = result === test.expected ? '✅' : '❌';
+    const className = result === test.expected ? 'success' : 'error';
+    html += `<div class="${className}">${status} ${test.name} [${test.coords.join(', ')}]: ${result} (expected ${test.expected})</div>`;
+  });
+  
+  resultsDiv.innerHTML = html;
+}
+
+// Test 3: Configure ALISS Map
+const alissMapConfig = {
+  target: '#alissmap',
+  defaultPostCode: 'G11AB',
+  defaultLatLng: [55.86521, -4.26990],
+  defaultSearchRadius: 50000,
+  categories: ['money', 'food-and-nutrition'],
+  serviceAreas: ['glasgow-city'] // Single service area for testing
+};
+
+// Run tests
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Starting comprehensive GeoJSON filtering tests...');
+  testServiceAreasAPI();
+  testPointInPolygon();
+  
+  // ALISS map will initialize automatically via the script tag
+  setTimeout(() => {
+    console.log('📍 ALISS Map should be initializing with GeoJSON filtering...');
+  }, 1000);
+});
+</script>
+
+</body>
+</html>

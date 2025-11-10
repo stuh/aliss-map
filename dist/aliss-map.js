@@ -11,7 +11,172 @@ let results_list; // ref to the results list div
 let markersArray = []; // array to hold the markers
 let validLatLngs = []; // Global array to store valid coordinates
 
+// Global variables for GeoJSON service areas functionality
+let serviceAreaBoundaries = new Map(); // Cache for GeoJSON boundaries
+let allServiceAreas = null; // Cache for all service areas data
 
+// Point-in-polygon algorithm using ray casting method
+const isPointInPolygon = (point, polygon) => {
+  const [x, y] = point;
+  let inside = false;
+  
+  // Handle different GeoJSON polygon structures
+  let coords = polygon;
+  if (polygon.type === 'Polygon') {
+    coords = polygon.coordinates[0]; // Take exterior ring
+  } else if (Array.isArray(polygon) && Array.isArray(polygon[0])) {
+    coords = polygon;
+  }
+  
+  if (!coords || coords.length < 3) {
+    return false;
+  }
+  
+  for (let i = 0, j = coords.length - 1; i < coords.length; j = i++) {
+    const [xi, yi] = coords[i];
+    const [xj, yj] = coords[j];
+    
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+      inside = !inside;
+    }
+  }
+  
+  return inside;
+};
+
+// Check if a point is within any of the configured service area boundaries
+const isPointInServiceAreas = (lat, lng) => {
+  if (!alissDefaults.serviceAreas || serviceAreaBoundaries.size === 0) {
+    console.log('🔍 No service area boundaries loaded, allowing all points (fallback to no geographic filtering)');
+    return true; // If no service areas configured or no boundaries available, don't filter
+  }
+  
+  const point = [lng, lat]; // GeoJSON uses [longitude, latitude]
+  console.log(`🔍 Checking if point [${lat}, ${lng}] is in ${serviceAreaBoundaries.size} service area boundaries...`);
+  
+  // Check against each service area boundary
+  for (const [areaName, geoJsonData] of serviceAreaBoundaries) {
+    if (geoJsonData) {
+      // Handle GeoJSON Feature object (parsed from geojson string)
+      let geometry = geoJsonData;
+      if (geoJsonData.type === 'Feature' && geoJsonData.geometry) {
+        geometry = geoJsonData.geometry;
+      }
+      
+      // Now check the geometry
+      if (geometry && geometry.type === 'Polygon') {
+        if (isPointInPolygon(point, geometry.coordinates[0])) {
+          console.log(`✅ Point [${lat}, ${lng}] is INSIDE ${areaName} boundary`);
+          return true;
+        }
+      } else if (geometry && geometry.type === 'MultiPolygon') {
+        for (const polygon of geometry.coordinates) {
+          if (isPointInPolygon(point, polygon[0])) {
+            console.log(`✅ Point [${lat}, ${lng}] is INSIDE ${areaName} boundary (MultiPolygon)`);
+            return true;
+          }
+        }
+      }
+      // Handle direct geometry object (fallback)
+      else if (geoJsonData.type === 'Polygon') {
+        if (isPointInPolygon(point, geoJsonData.coordinates[0])) {
+          console.log(`✅ Point [${lat}, ${lng}] is INSIDE ${areaName} boundary`);
+          return true;
+        }
+      } else if (geoJsonData.type === 'MultiPolygon') {
+        for (const polygon of geoJsonData.coordinates) {
+          if (isPointInPolygon(point, polygon[0])) {
+            console.log(`✅ Point [${lat}, ${lng}] is INSIDE ${areaName} boundary (MultiPolygon)`);
+            return true;
+          }
+        }
+      }
+    }
+  }
+  
+  console.log(`❌ Point [${lat}, ${lng}] is OUTSIDE all configured service area boundaries`);
+  return false;
+};
+
+// Fetch GeoJSON boundaries from service areas API
+const fetchServiceAreaBoundaries = async () => {
+  if (!alissDefaults.serviceAreas || serviceAreaBoundaries.size > 0) {
+    console.log('Skipping boundary fetch - no service areas configured or already loaded');
+    return; // No service areas configured or already loaded
+  }
+  
+  const configuredAreas = Array.isArray(alissDefaults.serviceAreas) 
+    ? alissDefaults.serviceAreas 
+    : alissDefaults.serviceAreas.split(',');
+    
+  console.log('🗺️ Fetching GeoJSON boundaries for service areas:', configuredAreas);
+  
+  try {
+    // First, fetch all service areas if we haven't already
+    if (!allServiceAreas) {
+      console.log('🌍 Fetching all service areas from API...');
+      const response = await fetch('https://www.aliss.org/api/v4/service-areas/');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Raw service areas API response:', data);
+        
+        // Handle different possible response formats
+        if (data.data && Array.isArray(data.data)) {
+          allServiceAreas = data.data;
+        } else if (data.results && Array.isArray(data.results)) {
+          allServiceAreas = data.results;
+        } else if (Array.isArray(data)) {
+          allServiceAreas = data;
+        } else {
+          console.error('❌ Unexpected service areas API response format:', data);
+          return;
+        }
+        
+        console.log(`✅ Loaded ${allServiceAreas.length} total service areas from API`);
+      } else {
+        console.warn(`❌ Failed to fetch service areas list: ${response.status}`);
+        return;
+      }
+    }
+    
+    // Now filter and store the boundaries for our configured areas
+    if (Array.isArray(allServiceAreas)) {
+      configuredAreas.forEach(areaSlug => {
+        const serviceArea = allServiceAreas.find(area => area.slug === areaSlug);
+        if (serviceArea) {
+          if (serviceArea.geojson) {
+            // Parse the geojson string if it exists
+            try {
+              const geometry = JSON.parse(serviceArea.geojson);
+              serviceAreaBoundaries.set(areaSlug, geometry);
+              console.log(`✅ Loaded GeoJSON boundary for ${areaSlug}:`, geometry);
+            } catch (error) {
+              console.warn(`❌ Failed to parse GeoJSON for ${areaSlug}:`, error);
+            }
+          } else if (serviceArea.geometry) {
+            serviceAreaBoundaries.set(areaSlug, serviceArea.geometry);
+            console.log(`✅ Loaded geometry boundary for ${areaSlug}:`, serviceArea.geometry);
+          } else {
+            console.warn(`❌ No boundary data found for service area: ${areaSlug} (service area exists but has no geometry/geojson)`);
+          }
+        } else {
+          console.warn(`❌ Service area not found: ${areaSlug}`);
+        }
+      });
+    } else {
+      console.error('❌ allServiceAreas is not an array:', allServiceAreas);
+      return;
+    }
+    
+    console.log(`✅ Service area boundaries loaded: ${serviceAreaBoundaries.size}/${configuredAreas.length}`);
+  } catch (error) {
+    console.error('Error fetching service area boundaries:', error);
+  }
+};
+
+// Note: Removed geocoding functionality to avoid external API dependencies
+// Services without coordinates are included in results but not shown on map
+// This matches the behavior of postcode-based searches
 
 const doPostCodeSearch = () => {
   // clear any previous errors and error styles
@@ -129,7 +294,13 @@ const getServices = async (baseurl) => {
   // Helper function to fetch all pages for a single category
   const fetchCategoryData = async (cat) => {
     let allServicesForCategory = [];
-    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&service_areas=${serviceAreas}&location_type=${locationType}&page_size=1000&radius=${radius}&sort=sort-distance&format=json&source=customisable-map&page=`;
+    
+    // Only use distance sorting for postcode searches, not region searches
+    const hasServiceAreas = alissDefaults.serviceAreas && 
+                            (Array.isArray(alissDefaults.serviceAreas) ? alissDefaults.serviceAreas.length > 0 : alissDefaults.serviceAreas !== '');
+    const sortParam = hasServiceAreas ? '' : '&sort=sort-distance';
+    
+    const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&service_areas=${serviceAreas}&location_type=${locationType}&page_size=1000&radius=${radius}${sortParam}&format=json&source=customisable-map&page=`;
     let page = 1;
     let lastResult = [];
     
@@ -189,6 +360,9 @@ const addMarkersToMap = async (services) => {
     markersLayer.clearLayers();
   }
 
+  // Ensure service area boundaries are loaded if using service areas
+  await fetchServiceAreaBoundaries();
+
   // create an array to hold the latlngs of the markers
   const postCode = getPostCode();
   const pclatlng = await getLatLngFromPostCode(postCode)
@@ -199,29 +373,55 @@ const addMarkersToMap = async (services) => {
   const markers = [];
   const maxRadius = alissDefaults.defaultSearchRadius/1000;
   
+  // Check if we're using service area boundaries or traditional radius filtering
+  const hasServiceAreas = alissDefaults.serviceAreas && 
+                          (Array.isArray(alissDefaults.serviceAreas) ? alissDefaults.serviceAreas.length > 0 : alissDefaults.serviceAreas !== '');
+  
   // First pass: collect all valid markers without rendering
-  services.forEach(service => {
+  for (const service of services) {
     if (service.locations.length > 0) {
-      service.locations.forEach(location => {
-        if (location.latitude && location.longitude) {
-          let locationDistance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], location.latitude || 0, location.longitude || 0);
-          if (locationDistance < maxRadius) {
+      for (const location of service.locations) {
+        const lat = location.latitude;
+        const lng = location.longitude;
+        
+        // Only process locations that have coordinates
+        // Locations without coordinates are included in results list but not shown on map
+        if (lat && lng) {
+          let includeLocation = false;
+          
+          if (hasServiceAreas) {
+            // Use GeoJSON boundary filtering for service areas
+            includeLocation = isPointInServiceAreas(lat, lng);
+            if (!includeLocation) {
+              console.log(`Location filtered out by service area boundaries: ${service.name} at ${location.formatted_address || 'Unknown address'}`);
+            }
+          } else {
+            // Use traditional radius filtering for postcode-based searches
+            const locationDistance = getDistanceFromLatLonInKm(pclatlng[0], pclatlng[1], lat, lng);
+            includeLocation = locationDistance < maxRadius;
+            if (!includeLocation) {
+              console.log(`Location skipped due to distance: ${service.name} at ${location.formatted_address} (${locationDistance.toFixed(2)} km away) max radius is ${maxRadius} km`);
+            }
+          }
+          
+          if (includeLocation) {
             // Store data for deferred marker creation
             markers.push({
               service,
               location,
-              latlng: [location.latitude, location.longitude]
+              latlng: [lat, lng]
             });
             
             // Add to valid coordinates for bounds calculation
-            validLatLngs.push([location.latitude, location.longitude]);
-          } else {
-            console.log(`Location skipped due to distance: ${service.name} at ${location.formatted_address} (${locationDistance.toFixed(2)} km away) max radius is ${maxRadius} km`);
+            validLatLngs.push([lat, lng]);
           }
+        } else {
+          // Log that this location doesn't have coordinates but will still appear in results
+          console.log(`Location without coordinates (will show in results only): ${service.name} at ${location.formatted_address || 'No address'}`);
         }
-      });
+      }
     }
-  });
+  }
   
   // Second pass: Create and add markers in batches
   const totalMarkers = markers.length;
@@ -328,16 +528,38 @@ const buildServiceCard = (service, locationOverride) => {
   // here we can swap out the services.locations for a single injected location for popups
   let locations = locationOverride ? [locationOverride] : service.locations;
   
-  // Filter locations by radius when using postcode search (not region search)
+  // Filter locations by radius when using postcode search or by GeoJSON boundaries for service areas
   const postCode = getPostCode();
   const maxRadius = alissDefaults.defaultSearchRadius/1000;
   
-  // Only filter by radius if we have search center coordinates and no service areas configured
-  // Service areas indicate region-based search, where radius filtering doesn't apply
+  // Check if we're using service area boundaries or traditional radius filtering
   const hasServiceAreas = alissDefaults.serviceAreas && 
                           (Array.isArray(alissDefaults.serviceAreas) ? alissDefaults.serviceAreas.length > 0 : alissDefaults.serviceAreas !== '');
   
-  if (!hasServiceAreas && window.currentSearchCenter && postCode) {
+  if (hasServiceAreas) {
+    // Filter locations using GeoJSON boundaries
+    const filteredLocations = [];
+    
+    for (const location of locations) {
+      const lat = location.latitude;
+      const lng = location.longitude;
+      
+      if (lat && lng) {
+        // Only filter locations with coordinates using boundaries
+        if (isPointInServiceAreas(lat, lng)) {
+          filteredLocations.push(location);
+        }
+      } else {
+        // Include locations without coordinates (they can't be boundary-filtered)
+        // This matches the behavior of postcode searches where services without 
+        // coordinates appear in results but not on map
+        filteredLocations.push(location);
+      }
+    }
+    
+    locations = filteredLocations;
+  } else if (window.currentSearchCenter && postCode) {
+    // Use traditional radius filtering for postcode-based searches
     const filteredLocations = [];
     
     locations.forEach(location => {
@@ -556,6 +778,9 @@ async function doSearch() {
   loader.classList.remove('load-hide');
   // Reset current page to 1 for new searches
   currentPage = 1;
+
+  // Load service area boundaries if using service areas
+  await fetchServiceAreaBoundaries();
 
   // get all the services from the API into an arrayOfObjects
   const servicesList = await getServices('https://api.aliss.org/v5/services/');

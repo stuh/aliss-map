@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALISS Map - Debug Version</title>
+  
+</head>
+<body>
+<h1>ALISS Map - GeoJSON Boundary Filtering Test</h1>
+<p>This page tests the new GeoJSON boundary filtering functionality. Check the browser console for detailed logs.</p>
+
+<div id="alissmap"></div>
+
+ <script src="/dist/aliss-map.js" type="text/javascript" defer></script>
+ <script type="text/javascript">
+  alissMapConfig = {
+       target: '#alissmap',
+      defaultPostCode: 'G11AB',
+      defaultLatLng: [55.86521, -4.26990],
+      defaultSearchRadius: 50000,
+      categories: ['money', 'food-and-nutrition'],
+      serviceAreas: ['glasgow-city']  // Test with just one service area first
+  }
+  
+  // Add some debugging
+  window.addEventListener('load', function() {
+    console.log('=== ALISS Map Debug Mode ===');
+    console.log('Service Areas configured:', alissMapConfig.serviceAreas);
+    console.log('Testing GeoJSON boundary filtering...');
+  });
+  </script>
+
+  
+</body>
+</html>
