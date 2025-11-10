@@ -328,6 +328,39 @@ const buildServiceCard = (service, locationOverride) => {
   // here we can swap out the services.locations for a single injected location for popups
   let locations = locationOverride ? [locationOverride] : service.locations;
   
+  // Filter locations by radius when using postcode search (not region search)
+  const postCode = getPostCode();
+  const maxRadius = alissDefaults.defaultSearchRadius/1000;
+  
+  // Only filter by radius if we have search center coordinates and no service areas configured
+  // Service areas indicate region-based search, where radius filtering doesn't apply
+  const hasServiceAreas = alissDefaults.serviceAreas && 
+                          (Array.isArray(alissDefaults.serviceAreas) ? alissDefaults.serviceAreas.length > 0 : alissDefaults.serviceAreas !== '');
+  
+  if (!hasServiceAreas && window.currentSearchCenter && postCode) {
+    const filteredLocations = [];
+    
+    locations.forEach(location => {
+      if (location.latitude && location.longitude) {
+        const locationDistance = getDistanceFromLatLonInKm(
+          window.currentSearchCenter[0], 
+          window.currentSearchCenter[1], 
+          location.latitude, 
+          location.longitude
+        );
+        
+        if (locationDistance < maxRadius) {
+          filteredLocations.push(location);
+        }
+      } else {
+        // Include locations without coordinates (they can't be distance-filtered)
+        filteredLocations.push(location);
+      }
+    });
+    
+    locations = filteredLocations;
+  }
+  
   // Optimize location rendering by creating HTML string once
   let locationsHTML = '';
   locations.forEach(location => {
@@ -512,6 +545,10 @@ try {
 
 // do the search
 async function doSearch() {
+  // get the postcode for when setting the distance and store search center coordinates globally
+  const postCode = getPostCode();
+  window.currentSearchCenter = await getLatLngFromPostCode(postCode);
+
   //ref to loader
   const loader = document.querySelector('.aliss-map-loader');
 
