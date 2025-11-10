@@ -115,7 +115,7 @@ const fetchServiceAreaBoundaries = async () => {
     // First, fetch all service areas if we haven't already
     if (!allServiceAreas) {
       console.log('🌍 Fetching all service areas from API...');
-      const response = await fetch('https://www.aliss.org/api/v4/service-areas/');
+      const response = await fetch('https://api.aliss.org/v5/service-areas?source=customisable-map');
       if (response.ok) {
         const data = await response.json();
         console.log('Raw service areas API response:', data);
