@@ -246,10 +246,10 @@ const getAlissRegions = async () => {
 };
 
 const buildRegionHierarchy = (regions) => {
-  // First, separate parent regions from wards
-  const parentRegions = regions.filter(region => !region.parent_id);
+  // First, separate parent regions from wards (excluding "Scotland")
+  const parentRegions = regions.filter(region => !region.parent_id && region.name !== 'Scotland');
   const wards = regions.filter(region => region.parent_id);
-  
+
   // Create a map of parent regions with their wards
   const regionMap = {};
   parentRegions.forEach(region => {
@@ -258,21 +258,21 @@ const buildRegionHierarchy = (regions) => {
       sub_regions: []
     };
   });
-  
+
   // Add wards to their parent regions
   wards.forEach(ward => {
     if (regionMap[ward.parent_id]) {
       regionMap[ward.parent_id].sub_regions.push(ward);
     }
   });
-  
+
   // Sort wards alphabetically within each region
   Object.values(regionMap).forEach(region => {
     if (region.sub_regions && region.sub_regions.length > 0) {
       region.sub_regions.sort((a, b) => a.name.localeCompare(b.name));
     }
   });
-  
+
   // Convert back to array and sort
   return Object.values(regionMap).sort((a, b) => a.name.localeCompare(b.name));
 };
