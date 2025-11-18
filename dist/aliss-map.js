@@ -444,9 +444,9 @@ const getServices = async (baseurl) => {
     let allServicesForCategory = [];
     
     // Only use distance sorting for postcode searches, not region searches
-    const hasServiceAreas = alissDefaults.serviceAreas && 
+    const hasServiceAreas = alissDefaults.serviceAreas &&
                             (Array.isArray(alissDefaults.serviceAreas) ? alissDefaults.serviceAreas.length > 0 : alissDefaults.serviceAreas !== '');
-    const sortParam = hasServiceAreas ? '' : '&sort=sort-distance';
+    const sortParam = (hasServiceAreas || radius === null) ? '' : '&sort=sort-distance';
     
     const baseUrl = `${baseurl}?q=${q}&categories=${cat}&postcode=${postCode}&community_groups=${communityGroups}&service_areas=${serviceAreas}&location_type=${locationType}&page_size=1000&radius=${radius}${sortParam}&format=json&source=customisable-map&page=`;
     let page = 1;
