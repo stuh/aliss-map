@@ -366,11 +366,16 @@ const doPostCodeSearch = () => {
     // Clear the array after removing from map
     serviceAreaPolygons.length = 0;
 
-    // Set radius: use original defaultSearchRadius if it exists, otherwise 10km
-    if (!originalRadius || originalRadius === null) {
+    // Set radius: if map was originally region-based (had serviceAreas), use 10km
+    // Otherwise, keep the original radius that was explicitly configured for postcode searches
+    if (originalServiceAreas && (Array.isArray(originalServiceAreas) ? originalServiceAreas.length > 0 : originalServiceAreas !== '')) {
+      // Was a region-based map, use 10km for postcode search
+      alissDefaults.defaultSearchRadius = 10000; // 10km in meters
+    } else if (!originalRadius || originalRadius === null) {
+      // No original radius, use 10km default
       alissDefaults.defaultSearchRadius = 10000; // 10km in meters
     }
-    // If originalRadius exists, it stays as-is
+    // If originalRadius exists AND no serviceAreas, keep it as-is (postcode map with specific radius)
 
     // Perform the postcode-based search
     doSearch().then(() => {
