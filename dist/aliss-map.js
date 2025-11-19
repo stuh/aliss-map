@@ -46,7 +46,11 @@ window.clearServiceAreaData = clearServiceAreaData;
 
 // Add polygon overlays to show service area boundaries on the map
 const addServiceAreaPolygons = () => {
-  if (!map || serviceAreaBoundaries.size === 0) {
+  // Check if service areas are configured - don't add polygons if they've been cleared (e.g., for postcode search)
+  const hasServiceAreas = alissDefaults.serviceAreas &&
+                          (Array.isArray(alissDefaults.serviceAreas) ? alissDefaults.serviceAreas.length > 0 : alissDefaults.serviceAreas !== '');
+
+  if (!map || serviceAreaBoundaries.size === 0 || !hasServiceAreas) {
     console.log('🔍 No map or service area boundaries to display');
     return;
   }
@@ -331,18 +335,65 @@ const doPostCodeSearch = () => {
   output_msg.textContent = '';
   postcode_field.classList.remove('search-error');
 
-  // If serviceAreas are configured, skip postcode validation
-  const hasServiceAreas = alissDefaults.serviceAreas && 
+  // Check if user entered a postcode in the search field
+  const userEnteredPostcode = postcode_field.value && postcode_field.value.trim() !== '' && postcode_field.value !== 'Scotland, UK';
+
+  if (userEnteredPostcode) {
+    // User wants to search by postcode - validate it first
+    const rePostCode = /^(([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2}))$/;
+    const postCodeOk = rePostCode.test(postcode_field.value);
+
+    if (!postCodeOk) {
+      output_msg.textContent = 'Please enter a valid postcode';
+      postcode_field.classList.add('search-error');
+      return;
+    }
+
+    // Valid postcode entered - switch to radius-based search, ignoring service areas
+    // Store original config to restore after search
+    const originalServiceAreas = alissDefaults.serviceAreas;
+    const originalRadius = alissDefaults.defaultSearchRadius;
+
+    // Temporarily clear service areas for postcode search
+    alissDefaults.serviceAreas = [];
+
+    // Remove service area polygon overlays from map since we're now using radius-based search
+    serviceAreaPolygons.forEach(polygon => {
+      if (map && map.hasLayer(polygon)) {
+        map.removeLayer(polygon);
+      }
+    });
+    // Clear the array after removing from map
+    serviceAreaPolygons.length = 0;
+
+    // Set radius: use original defaultSearchRadius if it exists, otherwise 500km
+    if (!originalRadius || originalRadius === null) {
+      alissDefaults.defaultSearchRadius = 500000; // 500km in meters
+    }
+    // If originalRadius exists, it stays as-is
+
+    // Perform the postcode-based search
+    doSearch().then(() => {
+      // Restore original config after search completes
+      alissDefaults.serviceAreas = originalServiceAreas;
+      alissDefaults.defaultSearchRadius = originalRadius;
+    });
+
+    return;
+  }
+
+  // No postcode entered by user - check if serviceAreas are configured
+  const hasServiceAreas = alissDefaults.serviceAreas &&
                           (Array.isArray(alissDefaults.serviceAreas) ? alissDefaults.serviceAreas.length > 0 : alissDefaults.serviceAreas !== '');
-  
+
   if (hasServiceAreas) {
     // Service areas are configured, postcode is not required
     doSearch();
     return;
   }
 
-  // the postcoe regex
-  rePostCode = /^(([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2}))$/;
+  // No service areas and no user-entered postcode - validate default postcode
+  const rePostCode = /^(([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-Ha-hJ-Yj-y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2}))$/;
 
   // do the test
   const postCodeOk = rePostCode.test(getPostCode());
@@ -399,7 +450,8 @@ const getSelectedCategory = () => {
 
 // get the postcode
 const getPostCode = () => {
-  return (postcode_field.value && postcode_field.value !== 'Scotland, UK') ? postcode_field.value : alissDefaults.defaultPostCode;
+  const fieldValue = postcode_field.value;
+  return (fieldValue && fieldValue !== 'Scotland, UK') ? fieldValue : alissDefaults.defaultPostCode;
 }
 
 // get the query
@@ -420,7 +472,7 @@ const getServices = async (baseurl) => {
   if (postCode) {
     radius = alissDefaults.defaultSearchRadius;
   }
-  
+
   // get the communityGroups from the config, if any exist then we need to replace the commas with semi colons
   const communityGroups = Array.isArray(alissDefaults.communityGroups)
   ? alissDefaults.communityGroups.join(';')
@@ -1528,14 +1580,15 @@ const initALISSMap = () => {
 
   // reference the aliss-map-search-form
   search_form = document.querySelector('.aliss-map-search-form');
-  // reference the postcode_field
-  postcode_field = document.querySelector('#aliss-postcode');
+  // reference the postcode_field - scope to within the embedded map to avoid conflicts with config page
+  const mapContainer = document.querySelector(alissDefaults.target).closest('.aliss-map') || document.querySelector('.aliss-map');
+  postcode_field = mapContainer.querySelector('#aliss-postcode');
   // reference the query field
-  query_field = document.querySelector('#aliss-q');
+  query_field = mapContainer.querySelector('#aliss-q');
   // reference the output div
-  output_msg = document.querySelector('.output-message')
+  output_msg = mapContainer.querySelector('.output-message')
   // reference the results list
-  results_list = document.querySelector('.results-list')
+  results_list = mapContainer.querySelector('.results-list')
 
   // add submit handler for the aliss-map-search-form
   search_form.addEventListener('submit', (event) => {
