@@ -629,28 +629,29 @@ const addMarkersToMap = async (services) => {
 // Update the total count display
   document.getElementById('aliss-totals').textContent = `${services.length} services nearest to you or available in your region.`;
 
-  // First, auto-fit the map to show all the pins
-  if (validLatLngs.length > 0) {
-    const bounds = L.latLngBounds(validLatLngs);
-    map.fitBounds(bounds, { padding: [50, 50] });
-  } else {
-    // If no valid markers, show Scotland view
-    map.setView([56.4907, -4.2026], 6);
-  }
-  
-  // AFTER the initial fit, set minimum zoom and bounds restrictions
   // Scotland bounds with generous margin for popup display
   const scotlandBounds = L.latLngBounds(
     [53.8, -9.2],  // Southwest corner (generous margin for popups)
     [61.6, 1.2]    // Northeast corner (generous margin for popups)
   );
-  
-  // Set minimum zoom to keep Scotland visible (approximately zoom level 6)
+
+  // Set minimum zoom and bounds restrictions BEFORE fitBounds to prevent conflict
   map.setMinZoom(6);
-  
-  // Set static bounds - no dynamic changes to prevent "dance" effect
   map.setMaxBounds(scotlandBounds);
-  
+
+  // Now fit the map to show all pins, respecting the bounds constraints
+  if (validLatLngs.length > 0) {
+    const bounds = L.latLngBounds(validLatLngs);
+    // Use maxZoom option to prevent zooming in too far on small datasets
+    map.fitBounds(bounds, {
+      padding: [50, 50],
+      maxZoom: 15 // Don't zoom in beyond this level
+    });
+  } else {
+    // If no valid markers, show Scotland view
+    map.setView([56.4907, -4.2026], 6);
+  }
+
   // Enable zoom and dragging
   map.scrollWheelZoom.enable();
   map.touchZoom.enable();
