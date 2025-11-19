@@ -366,9 +366,9 @@ const doPostCodeSearch = () => {
     // Clear the array after removing from map
     serviceAreaPolygons.length = 0;
 
-    // Set radius: use original defaultSearchRadius if it exists, otherwise 500km
+    // Set radius: use original defaultSearchRadius if it exists, otherwise 10km
     if (!originalRadius || originalRadius === null) {
-      alissDefaults.defaultSearchRadius = 500000; // 500km in meters
+      alissDefaults.defaultSearchRadius = 10000; // 10km in meters
     }
     // If originalRadius exists, it stays as-is
 
