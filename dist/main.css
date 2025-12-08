@@ -738,6 +738,18 @@ input[type="text"], input[type="number"], textarea {
   margin: 0 5px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .visible {
   visibility: visible;
 }
@@ -750,6 +762,10 @@ input[type="text"], input[type="number"], textarea {
   position: relative;
 }
 
+.sticky {
+  position: sticky;
+}
+
 .bottom-\[10px\] {
   bottom: 10px;
 }
@@ -760,6 +776,26 @@ input[type="text"], input[type="number"], textarea {
 
 .top-\[10px\] {
   top: 10px;
+}
+
+.right-0 {
+  right: 0px;
+}
+
+.top-0 {
+  top: 0px;
+}
+
+.bottom-0 {
+  bottom: 0px;
+}
+
+.z-10 {
+  z-index: 10;
+}
+
+.float-right {
+  float: right;
 }
 
 .mx-auto {
@@ -805,6 +841,34 @@ input[type="text"], input[type="number"], textarea {
 
 .mt-\[17px\] {
   margin-top: 17px;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.ml-4 {
+  margin-left: 1rem;
+}
+
+.mt-3 {
+  margin-top: 0.75rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
 }
 
 .block {
@@ -867,12 +931,36 @@ input[type="text"], input[type="number"], textarea {
   width: 100%;
 }
 
+.w-8 {
+  width: 2rem;
+}
+
+.w-16 {
+  width: 4rem;
+}
+
+.w-10 {
+  width: 2.5rem;
+}
+
+.w-14 {
+  width: 3.5rem;
+}
+
+.w-4 {
+  width: 1rem;
+}
+
 .min-w-\[150px\] {
   min-width: 150px;
 }
 
 .cursor-pointer {
   cursor: pointer;
+}
+
+.flex-row-reverse {
+  flex-direction: row-reverse;
 }
 
 .flex-col {
@@ -889,6 +977,10 @@ input[type="text"], input[type="number"], textarea {
 
 .justify-start {
   justify-content: flex-start;
+}
+
+.justify-end {
+  justify-content: flex-end;
 }
 
 .justify-center {
@@ -988,6 +1080,10 @@ input[type="text"], input[type="number"], textarea {
   padding: 1.5rem;
 }
 
+.p-1 {
+  padding: 0.25rem;
+}
+
 .px-\[32px\] {
   padding-left: 32px;
   padding-right: 32px;
@@ -1016,6 +1112,11 @@ input[type="text"], input[type="number"], textarea {
 .py-\[35px\] {
   padding-top: 35px;
   padding-bottom: 35px;
+}
+
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 .pb-3 {
@@ -1064,6 +1165,10 @@ input[type="text"], input[type="number"], textarea {
   line-height: 1.5rem;
 }
 
+.text-\[1\.5rem\] {
+  font-size: 1.5rem;
+}
+
 .font-black {
   font-weight: 900;
 }
@@ -1094,6 +1199,10 @@ input[type="text"], input[type="number"], textarea {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
+.underline {
+  text-decoration-line: underline;
 }
 
 .blur {
@@ -1156,6 +1265,33 @@ input[type="text"], input[type="number"], textarea {
   background-color: rgb(33 33 33 / var(--tw-bg-opacity));
 }
 
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+.focus\:absolute:focus {
+  position: absolute;
+}
+
+.focus\:left-2:focus {
+  left: 0.5rem;
+}
+
+.focus\:top-2:focus {
+  top: 0.5rem;
+}
+
+.focus\:z-50:focus {
+  z-index: 50;
+}
+
 .focus\:border-almostblack:focus {
   --tw-border-opacity: 1;
   border-color: rgb(33 33 33 / var(--tw-border-opacity));
@@ -1166,9 +1302,17 @@ input[type="text"], input[type="number"], textarea {
   background-color: rgb(253 213 34 / var(--tw-bg-opacity));
 }
 
+.focus\:p-4:focus {
+  padding: 1rem;
+}
+
 .focus\:text-almostblack:focus {
   --tw-text-opacity: 1;
   color: rgb(33 33 33 / var(--tw-text-opacity));
+}
+
+.focus\:underline:focus {
+  text-decoration-line: underline;
 }
 
 .focus\:outline-none:focus {

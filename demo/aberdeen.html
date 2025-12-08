@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALISS Map</title>
+  
+</head>
+<body>
+<div id="alissmap"></div>
+
+ <script src="/dist/aliss-map.js" type="text/javascript" defer></script>
+ <script type="text/javascript">
+  alissMapConfig = {
+    target: '#alissmap',
+    defaultPostCode: 'AB24 5BA',
+    defaultLatLng: [57.1502034,-2.0935531],
+    defaultSearchRadius: 15000,
+    categories: ["public-parks-and-gardens","play-areas","recreational-grounds","allotments","community-garden","community-growing","community-composting","urban-farming","outdoor-activity","environment","blue-spaces","green-spaces","built-environment","natural-environment","climate-action","conservation-and-sustainability-education","nature-and-wildlife-preservation","energy-efficiency-and-renewable-resources"],
+    communityGroups: [],
+    pagination: false,
+    itemsPerPage: null
+  }
+  </script>
+
+  
+</body>
+</html>
