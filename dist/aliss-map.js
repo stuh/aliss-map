@@ -1576,8 +1576,9 @@ const initALISSMap = () => {
     chunkedLoading: true,
     chunkInterval: 50,
     chunkDelay: 1,
-    spiderfyOnMaxZoom: false,
-    disableClusteringAtZoom: 17
+    // Keep identical-coordinate markers clustered until clicked, then fan them
+    // out so every service at that location can be selected.
+    spiderfyOnMaxZoom: true
   });
   
   // Add it to the map
@@ -1631,5 +1632,3 @@ document.addEventListener('DOMContentLoaded', function() {
     loadLeafletJS();
   }
 });
-
-
